@@ -2,7 +2,7 @@ import { lucia } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { NextRequest } from "next/server";
 import { getUserData } from "../../../lib/farcaster";
-import { parseGeo } from "../../../lib/utils";
+import { determineTimezone, parseGeo } from "../../../lib/utils";
 import { User } from "../../../types/user";
 import { UserDataType } from "@farcaster/core";
 
@@ -34,10 +34,11 @@ export async function GET(req: NextRequest) {
       // Get user data from hub
       const userData = await getUserData(fid);
 
-      let geo: ReturnType<typeof parseGeo> | null = null;
+      let timezone: string | null = null;
 
       if (userData[UserDataType.LOCATION]) {
-        geo = parseGeo(userData[UserDataType.LOCATION]);
+        const geo = parseGeo(userData[UserDataType.LOCATION]);
+        timezone = determineTimezone(geo.long);
       }
 
       // Create the new user
@@ -45,8 +46,7 @@ export async function GET(req: NextRequest) {
         .insertInto("users")
         .values({
           fid,
-          locationLatitude: geo?.lat,
-          locationLongitude: geo?.long,
+          timezone,
         })
         .returningAll()
         .executeTakeFirst();

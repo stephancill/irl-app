@@ -25,7 +25,8 @@ const pool = new Pool({
 });
 
 export const getDbClient = (
-  connectionString: string | undefined = process.env.DATABASE_URL
+  connectionString: string | undefined = process.env.DATABASE_URL,
+  pool: pg.Pool | undefined = undefined
 ) => {
   if (!connectionString) {
     throw new Error("DATABASE_URL is not set");
@@ -33,7 +34,12 @@ export const getDbClient = (
 
   return new Kysely<Tables>({
     dialect: new PostgresDialect({
-      pool,
+      pool:
+        pool ??
+        new Pool({
+          max: 20,
+          connectionString,
+        }),
       cursor: Cursor,
     }),
     plugins: [new CamelCasePlugin()],

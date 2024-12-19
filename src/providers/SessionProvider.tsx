@@ -34,6 +34,7 @@ async function fetchUser(token: string): Promise<User> {
 
 interface SessionContextType {
   user: User | null | undefined;
+  context: FrameContext | null | undefined;
   isLoading: boolean;
   isError: boolean;
   refetch: () => void;
@@ -86,7 +87,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
     const redirectUrl = encodeURIComponent(`${currentPath}${searchParams}`);
 
-    if (user && (!user.locationLatitude || !user.locationLongitude)) {
+    if (user && !user.timezone) {
       router.push(`/location?redirect=${redirectUrl}`);
     }
   }, [user, isLoading, isError, router, isSDKLoaded]);
@@ -95,6 +96,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     <SessionContext.Provider
       value={{
         user,
+        context,
         isLoading: isLoading || !isSDKLoaded,
         isError,
         refetch,

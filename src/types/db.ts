@@ -5,8 +5,8 @@ export type UserRow = {
   fid: string;
   createdAt: Generated<Date>;
   updatedAt: Generated<Date>;
-  locationLongitude: number | null;
-  locationLatitude: number | null;
+  timezone: string | null;
+  warpcastToken: string | null;
 };
 
 export interface UserSessionRow {
@@ -25,8 +25,15 @@ export interface PostRow {
   deletedAt: Date | null;
 }
 
+export interface PostAlertRow {
+  id: Generated<number>;
+  timeUtc: Date;
+  timezone: string;
+}
+
 export type Tables = {
   users: UserRow;
   userSession: UserSessionRow;
   posts: PostRow;
+  postAlerts: PostAlertRow;
 };

@@ -13,8 +13,8 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("updated_at", "timestamp", (col) =>
       col.notNull().defaultTo(sql`CURRENT_TIMESTAMP`)
     )
-    .addColumn("location_longitude", "decimal")
-    .addColumn("location_latitude", "decimal")
+    .addColumn("timezone", "varchar")
+    .addColumn("warpcast_token", "varchar")
     .execute();
 
   await db.schema
@@ -41,6 +41,15 @@ export async function up(db: Kysely<any>): Promise<void> {
     )
     .addColumn("expires_at", "timestamptz", (col) => col.notNull())
     .addColumn("deleted_at", "timestamptz")
+    .execute();
+
+  await db.schema
+    .createTable("post_alerts")
+    .addColumn("id", "integer", (col) =>
+      col.primaryKey().generatedAlwaysAsIdentity()
+    )
+    .addColumn("time_utc", "timestamptz", (col) => col.notNull())
+    .addColumn("timezone", "text", (col) => col.notNull())
     .execute();
 }
 
