@@ -14,7 +14,8 @@ export async function up(db: Kysely<any>): Promise<void> {
       col.notNull().defaultTo(sql`CURRENT_TIMESTAMP`)
     )
     .addColumn("timezone", "varchar")
-    .addColumn("warpcast_token", "varchar")
+    .addColumn("notification_url", "varchar")
+    .addColumn("notification_token", "varchar")
     .execute();
 
   await db.schema

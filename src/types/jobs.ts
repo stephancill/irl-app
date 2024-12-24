@@ -8,8 +8,9 @@ export type TimezoneJobData = {
 export type AlertsBulkJobData = {
   notifications: {
     fid: string;
-    warpcastToken: string;
+    token: string;
   }[];
+  url: string;
   alertId: number;
   chunkId: number;
 };

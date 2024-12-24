@@ -3,7 +3,7 @@ import {
   sendNotificationResponseSchema,
 } from "@farcaster/frame-sdk";
 
-export async function sendNotifications(requestBody: {
+export async function _sendNotifications(requestBody: {
   data: {
     targetUrl: string;
     tokens: string[];

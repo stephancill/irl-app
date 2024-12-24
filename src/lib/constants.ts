@@ -11,8 +11,11 @@ export const ANCHOR_TIMEZONES = [
 // Jobs that queue alerts for a given timezone
 export const ALERTS_TIMEZONES_QUEUE_NAME = "alerts-timezones";
 
-// Jobs that alert users
+// Jobs that alert users in bulk
 export const ALERTS_BULK_QUEUE_NAME = "alerts-bulk";
+
+// Jobs that alert users
+export const ALERTS_QUEUE_NAME = "alerts";
 
 export const FRAME_MANIFEST = {
   accountAssociation: {

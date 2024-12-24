@@ -31,26 +31,50 @@ export const timezonesWorker = new Worker<TimezoneJobData>(
       .selectFrom("users")
       .selectAll()
       .where("timezone", "=", anchorTz)
-      .where("warpcastToken", "is not", null)
+      .where("notificationToken", "is not", null)
+      .where("notificationUrl", "is not", null)
       .execute();
 
-    // Group into chunks of 100
-    const userChunks: (typeof users)[] = [];
-    for (let i = 0; i < users.length; i += 100) {
-      userChunks.push(users.slice(i, i + 100));
-    }
+    // Group users by notification url
+    const usersByUrl = users.reduce((acc, user) => {
+      const notificationUrl = user.notificationUrl!;
+      if (!acc[notificationUrl]) {
+        acc[notificationUrl] = [];
+      }
+      acc[notificationUrl].push(user);
+      return acc;
+    }, {} as Record<string, typeof users>);
+
+    // Then chunk each webhook group into groups of 100
+    const allChunks: Array<{
+      notificationUrl: string;
+      users: typeof users;
+      chunkId: number;
+    }> = [];
+    Object.entries(usersByUrl).forEach(([notificationUrl, webhookUsers]) => {
+      let chunkId = 0;
+
+      for (let i = 0; i < webhookUsers.length; i += 100) {
+        allChunks.push({
+          notificationUrl,
+          users: webhookUsers.slice(i, i + 100),
+          chunkId: chunkId++,
+        });
+      }
+    });
 
     const jobs = await alertsBulkQueue.addBulk(
-      userChunks.map((chunk, index) => ({
-        name: `${postAlert.id}-${index}`,
+      allChunks.map((chunk) => ({
+        name: `${postAlert.id}-${chunk.notificationUrl}-${chunk.chunkId}`,
         data: {
-          notifications: chunk.map((user) => ({
+          notifications: chunk.users.map((user) => ({
             fid: user.fid,
-            warpcastToken: user.warpcastToken,
+            token: user.notificationToken!,
           })),
+          url: chunk.notificationUrl,
           alertId: postAlert.id,
-          chunkId: index,
-        } as AlertsBulkJobData,
+          chunkId: chunk.chunkId,
+        } satisfies AlertsBulkJobData,
       }))
     );
 

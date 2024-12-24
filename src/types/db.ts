@@ -6,7 +6,8 @@ export type UserRow = {
   createdAt: Generated<Date>;
   updatedAt: Generated<Date>;
   timezone: string | null;
-  warpcastToken: string | null;
+  notificationUrl: string | null;
+  notificationToken: string | null;
 };
 
 export interface UserSessionRow {

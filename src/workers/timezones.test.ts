@@ -45,12 +45,14 @@ describe("timezonesWorker", () => {
         {
           fid: "1",
           timezone: testTimezone,
-          warpcastToken: "token1",
+          notificationToken: "token1",
+          notificationUrl: "https://example.com/notifications",
         },
         {
           fid: "2",
           timezone: testTimezone,
-          warpcastToken: "token2",
+          notificationToken: "token2",
+          notificationUrl: "https://example.com/notifications",
         },
       ])
       .execute();

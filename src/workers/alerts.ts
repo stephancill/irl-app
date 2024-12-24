@@ -1,26 +1,23 @@
 import { Worker } from "bullmq";
 import { ALERTS_BULK_QUEUE_NAME } from "../lib/constants";
 import { redis } from "../lib/redis";
-import { sendNotifications } from "../lib/warpcast";
 import { AlertsBulkJobData } from "../types/jobs";
+import { sendFrameNotifications } from "../lib/notifications";
 
 export const alertsBulkWorker = new Worker<AlertsBulkJobData>(
   ALERTS_BULK_QUEUE_NAME,
   async (job) => {
-    const { notifications, alertId, chunkId } = job.data;
+    const { notifications, url, alertId, chunkId } = job.data;
 
-    const warpcastTokens = notifications.map(
-      ({ warpcastToken }) => warpcastToken
-    );
+    const tokens = notifications.map(({ token }) => token);
 
-    await sendNotifications({
-      data: {
-        tokens: warpcastTokens,
-        title: "It's time to post your daily snap!",
-        body: "Post your snap within 5 minutes to be on time",
-        targetUrl: process.env.APP_URL,
-        notificationId: `dailysnap-${alertId}-${chunkId}`,
-      },
+    await sendFrameNotifications({
+      tokens,
+      title: "It's time to post your daily snap!",
+      body: "Post your snap within 5 minutes to be on time",
+      url,
+      targetUrl: process.env.APP_URL,
+      notificationId: `dailysnap-${alertId}-${chunkId}`,
     });
   },
   { connection: redis }
