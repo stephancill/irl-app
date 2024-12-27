@@ -4,7 +4,7 @@ import { db } from "../../../lib/db";
 export const GET = withAuth(async (req, user) => {
   const { searchParams } = new URL(req.url);
   const cursor = searchParams.get("cursor");
-  const limit = 20;
+  const limit = 2;
 
   // TODO: Only show posts from users that the user follows
   let query = db
@@ -25,7 +25,7 @@ export const GET = withAuth(async (req, user) => {
     .limit(limit + 1);
 
   if (cursor) {
-    query = query.where("createdAt", "<", new Date(cursor));
+    query = query.where("posts.createdAt", "<", new Date(cursor));
   }
 
   const posts = await query.execute();

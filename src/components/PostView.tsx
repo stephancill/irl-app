@@ -39,7 +39,7 @@ export function PostView({ post, initialView = "front" }: PostViewProps) {
         onClick={() =>
           setPrimaryImage(primaryImage === "front" ? "back" : "front")
         }
-        className="absolute top-4 right-4 z-20 bg-white/80 p-1 rounded-lg backdrop-blur-sm"
+        className="absolute top-4 right-4 z-10 bg-white/80 p-1 rounded-lg backdrop-blur-sm"
       >
         <div className="relative w-24">
           {isThumbnailLoading && (
