@@ -6,7 +6,7 @@ import Link from "next/link";
 import { getRelativeTime } from "../lib/utils";
 import { useSession } from "../providers/SessionProvider";
 import { Post } from "../types/post";
-import { PostImage } from "./PostImage";
+import { PostView } from "./PostView";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 
@@ -30,18 +30,20 @@ export function App() {
       return {
         posts: [
           {
-            imageUrl: "/rick.jpg",
+            frontImageUrl: "/rick.jpg",
+            backImageUrl: "/rick2.jpg",
+            primaryImage: "front",
             createdAt: new Date().toISOString(),
-            expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
             id: "1",
             userId: "1",
             fid: "1",
             timezone: "America/New_York",
           },
           {
-            imageUrl: "/rick.jpg",
+            frontImageUrl: "/rick.jpg",
+            backImageUrl: "/rick2.jpg",
+            primaryImage: "back",
             createdAt: new Date().toISOString(),
-            expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(),
             id: "2",
             userId: "2",
             fid: "2",
@@ -71,7 +73,7 @@ export function App() {
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-2">
                 <Avatar className="border">
-                  <AvatarImage src={post.imageUrl} />
+                  <AvatarImage src="" />
                   <AvatarFallback>{post.fid}</AvatarFallback>
                 </Avatar>
                 <p className="text-sm font-bold text-lg">{post.fid}</p>
@@ -80,7 +82,7 @@ export function App() {
                 {getRelativeTime(new Date(post.createdAt))}
               </p>
             </div>
-            <PostImage src={post.imageUrl} alt="Post" />
+            <PostView post={post} initialView={post.primaryImage} />
           </div>
         ))}
       </div>

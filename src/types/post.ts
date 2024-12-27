@@ -1,6 +1,7 @@
 export type Post = {
   id: string;
   createdAt: string;
-  imageUrl: string;
-  expiresAt: string;
+  frontImageUrl: string;
+  backImageUrl: string;
+  primaryImage: "back" | "front";
 };

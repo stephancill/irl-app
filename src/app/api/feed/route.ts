@@ -12,7 +12,9 @@ export const GET = withAuth(async (req, user) => {
     .innerJoin("users", "users.id", "posts.userId")
     .select([
       "posts.id",
-      "posts.imageUrl",
+      "posts.frontImageUrl",
+      "posts.backImageUrl",
+      "posts.primaryImage",
       "posts.createdAt",
       "users.id as userId",
       "users.fid",
