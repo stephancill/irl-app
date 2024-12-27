@@ -70,3 +70,20 @@ export function getRelativeTime(d1: Date, d2: Date = new Date()): string {
 
   return rtf.format(0, "second");
 }
+
+export function objectToMetadataString(obj: Record<string, any>): string {
+  return Object.entries(obj)
+    .map(([key, value]) => {
+      // Convert value to string, handling arrays and other types
+      const stringValue = Array.isArray(value)
+        ? JSON.stringify(value)
+        : String(value);
+
+      // Escape special characters: |, =, and "
+      const escapedKey = key.replace(/([|="\\])/g, "\\$1");
+      const escapedValue = stringValue.replace(/([|="\\])/g, "\\$1");
+
+      return `${escapedKey}=${escapedValue}`;
+    })
+    .join("|");
+}

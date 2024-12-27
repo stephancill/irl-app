@@ -19,11 +19,11 @@ export interface UserSessionRow {
 export interface PostRow {
   id: Generated<string>;
   userId: string;
-  imageId: string | null;
-  imageUrl: string;
+  frontImageUrl: string | null;
+  backImageUrl: string | null;
   createdAt: Generated<Date>;
-  expiresAt: Date;
   deletedAt: Date | null;
+  primaryImage: "front" | "back";
 }
 
 export interface PostAlertRow {

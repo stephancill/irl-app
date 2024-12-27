@@ -35,12 +35,12 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("user_id", "varchar", (col) =>
       col.notNull().references("users.id").onDelete("cascade")
     )
-    .addColumn("image_id", "text")
-    .addColumn("image_url", "text", (col) => col.notNull())
+    .addColumn("front_image_url", "varchar")
+    .addColumn("back_image_url", "varchar")
+    .addColumn("primary_image", "varchar")
     .addColumn("created_at", "timestamptz", (col) =>
       col.notNull().defaultTo(sql`CURRENT_TIMESTAMP`)
     )
-    .addColumn("expires_at", "timestamptz", (col) => col.notNull())
     .addColumn("deleted_at", "timestamptz")
     .execute();
 

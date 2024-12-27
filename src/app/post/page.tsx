@@ -1,15 +1,13 @@
 "use client";
 
+import { useMutation } from "@tanstack/react-query";
+import { ArrowRight, Camera, RefreshCcw, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React from "react";
 import Webcam from "react-webcam";
-import {
-  Camera,
-  RefreshCcw,
-  ArrowLeft,
-  RotateCcw,
-  ArrowRight,
-} from "lucide-react";
+import { useToast } from "../../hooks/use-toast";
+import { AuthError } from "../../lib/errors";
 
 interface MediaDeviceInfo {
   deviceId: string;
@@ -17,7 +15,20 @@ interface MediaDeviceInfo {
   label: string;
 }
 
+const dataURItoBlob = (dataURI: string) => {
+  const byteString = atob(dataURI.split(",")[1]);
+  const mimeString = dataURI.split(",")[0].split(":")[1].split(";")[0];
+  const ab = new ArrayBuffer(byteString.length);
+  const ia = new Uint8Array(ab);
+  for (let i = 0; i < byteString.length; i++) {
+    ia[i] = byteString.charCodeAt(i);
+  }
+  return new Blob([ab], { type: mimeString });
+};
+
 export default function Page() {
+  const { toast } = useToast();
+  const router = useRouter();
   const [devices, setDevices] = React.useState<MediaDeviceInfo[]>();
   const [isBackCamera, setIsBackCamera] = React.useState(false);
   const [frontDevice, setFrontDevice] = React.useState<MediaDeviceInfo | null>(
@@ -56,7 +67,6 @@ export default function Page() {
   }, [switchCamera]);
 
   const handleDevices = React.useCallback((mediaDevices: MediaDeviceInfo[]) => {
-    console.log("mediaDevices", mediaDevices);
     const videoDevices = mediaDevices.filter(
       ({ kind }) => kind === "videoinput"
     );
@@ -162,6 +172,78 @@ export default function Page() {
     checkStream();
   }, []);
 
+  const uploadMutation = useMutation({
+    mutationFn: async () => {
+      if (!frontImage || !backImage) {
+        throw new Error("Front and back images are required");
+      }
+
+      // Get the signature from the server
+      const signResponse = await fetch(
+        `/api/generate-signature?primaryType=${activeCamera}`
+      );
+
+      if (!signResponse.ok) {
+        if (signResponse.status === 401) {
+          throw new AuthError("Failed to get signature");
+        }
+        throw new Error("Failed to get signature");
+      }
+
+      const responseData = await signResponse.json();
+
+      async function uploadImage(image: string, cameraType: "front" | "back") {
+        const signData = responseData[cameraType];
+
+        const formData = new FormData();
+        formData.append("file", dataURItoBlob(image));
+        formData.append("api_key", responseData.apikey);
+        formData.append("signature", signData.signature);
+
+        for (const key in signData.params) {
+          formData.append(key, signData.params[key]);
+        }
+
+        const uploadResponse = await fetch(
+          `https://api.cloudinary.com/v1_1/${responseData.cloudname}/image/upload`,
+          {
+            method: "POST",
+            body: formData,
+          }
+        );
+
+        if (!uploadResponse.ok) {
+          throw new Error("Failed to upload image to Cloudinary");
+        }
+      }
+
+      // Upload front and back images
+      await Promise.all([
+        uploadImage(frontImage, "front"),
+        uploadImage(backImage, "back"),
+      ]);
+
+      // TODO: Poll server for complete post
+    },
+    onSuccess: () => {
+      router.push("/");
+      // toast({
+      //   title: "Images uploaded successfully",
+      //   description: "View your post",
+      //   action: (
+      //     <ToastAction
+      //       altText="View"
+      //       onClick={() => {
+      //         router.push("/");
+      //       }}
+      //     >
+      //       View
+      //     </ToastAction>
+      //   ),
+      // });
+    },
+  });
+
   return (
     <div className="h-screen">
       <div className="fixed inset-0">
@@ -202,27 +284,29 @@ export default function Page() {
               dailysnap
             </h2>
             <div className="relative h-full">
-              <Webcam
-                ref={webcamRef}
-                audio={false}
-                mirrored={!isBackCamera}
-                screenshotFormat="image/jpeg"
-                videoConstraints={{
-                  deviceId: isBackCamera
-                    ? backDevice?.deviceId
-                    : frontDevice?.deviceId,
-                  facingMode: isBackCamera ? "environment" : "user",
-                }}
-                className={`w-full h-full object-cover ${
-                  isLoading ? "opacity-0" : "opacity-100"
-                }`}
-                onUserMedia={handleUserMedia}
-                onClick={handleDoubleTap}
-                onError={(e) => {
-                  console.error("Error accessing camera:", e);
-                  setIsLoading(false);
-                }}
-              />
+              {(!frontImage || !backImage) && (
+                <Webcam
+                  ref={webcamRef}
+                  audio={false}
+                  mirrored={!isBackCamera}
+                  screenshotFormat="image/png"
+                  videoConstraints={{
+                    deviceId: isBackCamera
+                      ? backDevice?.deviceId
+                      : frontDevice?.deviceId,
+                    facingMode: isBackCamera ? "environment" : "user",
+                  }}
+                  className={`w-full h-full object-cover ${
+                    isLoading ? "opacity-0" : "opacity-100"
+                  }`}
+                  onUserMedia={handleUserMedia}
+                  onClick={handleDoubleTap}
+                  onError={(e) => {
+                    console.error("Error accessing camera:", e);
+                    setIsLoading(false);
+                  }}
+                />
+              )}
               {isLoading && (
                 <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
                   <div className="flex flex-col items-center justify-center gap-4">
@@ -275,18 +359,14 @@ export default function Page() {
                       }}
                       className="bg-white/80 p-4 rounded-full disabled:opacity-50 backdrop-blur-sm flex items-center gap-2"
                       aria-label="Retake photos"
+                      disabled={uploadMutation.isPending}
                     >
                       <RotateCcw className="w-6 h-6" />
                     </button>
                     <button
-                      onClick={() => {
-                        // Add your proceed logic here
-                        console.log("Proceed with images:", {
-                          frontImage,
-                          backImage,
-                        });
-                      }}
+                      onClick={() => uploadMutation.mutate()}
                       className="bg-white/80 p-4 rounded-full disabled:opacity-50 backdrop-blur-sm flex items-center gap-2"
+                      disabled={uploadMutation.isPending}
                       aria-label="Proceed with photos"
                     >
                       <ArrowRight className="w-6 h-6" />
@@ -298,12 +378,8 @@ export default function Page() {
           </div>
         </div>
       </div>
-      <Link
-        href="/"
-        className="fixed top-4 left-4 z-10 bg-white/80 p-3 rounded-full backdrop-blur-sm"
-        aria-label="Go back"
-      >
-        <ArrowLeft className="w-6 h-6" />
+      <Link href="/" className="fixed top-4 right-4 z-10" aria-label="Go back">
+        <X className="w-6 h-6 text-white" />
       </Link>
     </div>
   );

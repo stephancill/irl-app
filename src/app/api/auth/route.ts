@@ -28,6 +28,22 @@ export async function GET(req: NextRequest) {
 
   if (existingUser) {
     user = existingUser;
+
+    // Check if timezone has been set on protocol if not in db
+    if (!existingUser.timezone) {
+      const userData = await getUserData(fid);
+
+      if (userData[UserDataType.LOCATION]) {
+        const geo = parseGeo(userData[UserDataType.LOCATION]);
+        const timezone = determineTimezone(geo.long);
+        user = await db
+          .updateTable("users")
+          .set({ timezone })
+          .where("id", "=", existingUser.id)
+          .returningAll()
+          .executeTakeFirst();
+      }
+    }
   } else {
     // Create user
     try {
@@ -67,7 +83,7 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  const session = await lucia.createSession(user.id, {});
+  const session = await lucia.createSession(user!.id, {});
 
   return Response.json(
     {
