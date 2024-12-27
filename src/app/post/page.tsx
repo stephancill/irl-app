@@ -1,0 +1,310 @@
+"use client";
+
+import Link from "next/link";
+import React from "react";
+import Webcam from "react-webcam";
+import {
+  Camera,
+  RefreshCcw,
+  ArrowLeft,
+  RotateCcw,
+  ArrowRight,
+} from "lucide-react";
+
+interface MediaDeviceInfo {
+  deviceId: string;
+  kind: string;
+  label: string;
+}
+
+export default function Page() {
+  const [devices, setDevices] = React.useState<MediaDeviceInfo[]>();
+  const [isBackCamera, setIsBackCamera] = React.useState(false);
+  const [frontDevice, setFrontDevice] = React.useState<MediaDeviceInfo | null>(
+    null
+  );
+  const [backDevice, setBackDevice] = React.useState<MediaDeviceInfo | null>(
+    null
+  );
+  const webcamRef = React.useRef<Webcam>(null);
+  const [frontImage, setFrontImage] = React.useState<string | null>(null);
+  const [backImage, setBackImage] = React.useState<string | null>(null);
+  const [isCapturing, setIsCapturing] = React.useState(false);
+  const [countdown, setCountdown] = React.useState(3);
+  const [activeCamera, setActiveCamera] = React.useState<"front" | "back">(
+    "front"
+  );
+  const [isLoading, setIsLoading] = React.useState(true);
+  const isCameraReady = React.useRef(false);
+
+  const switchCamera = React.useCallback(() => {
+    setIsLoading(true);
+    const newCamera = activeCamera === "front" ? "back" : "front";
+    setActiveCamera(newCamera);
+    setIsBackCamera(newCamera === "back");
+  }, [activeCamera]);
+
+  // Double tap handler
+  const lastTap = React.useRef(0);
+  const handleDoubleTap = React.useCallback(() => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
+    if (now - lastTap.current < DOUBLE_TAP_DELAY) {
+      switchCamera();
+    }
+    lastTap.current = now;
+  }, [switchCamera]);
+
+  const handleDevices = React.useCallback((mediaDevices: MediaDeviceInfo[]) => {
+    console.log("mediaDevices", mediaDevices);
+    const videoDevices = mediaDevices.filter(
+      ({ kind }) => kind === "videoinput"
+    );
+
+    // Back devices, ordered alphabetically
+    const backDevices = videoDevices
+      .filter((device) => device.label.toLowerCase().includes("back"))
+      .sort((a, b) => a.label.localeCompare(b.label));
+
+    // Front devices, ordered alphabetically
+    const frontDevices = videoDevices
+      .filter((device) => device.label.toLowerCase().includes("front"))
+      .sort((a, b) => a.label.localeCompare(b.label));
+
+    setFrontDevice(frontDevices[0]);
+    setBackDevice(backDevices[0]);
+
+    setDevices(videoDevices);
+  }, []);
+
+  React.useEffect(() => {
+    navigator.mediaDevices
+      .getUserMedia({ video: true })
+      .then(() => navigator.mediaDevices.enumerateDevices())
+      .then(handleDevices)
+      .catch((error) => console.error("Error accessing camera:", error));
+  }, [handleDevices]);
+
+  const captureFromCamera = React.useCallback((isBack: boolean) => {
+    const imageSrc = webcamRef.current?.getScreenshot();
+    if (imageSrc) {
+      if (isBack) {
+        setBackImage(imageSrc);
+      } else {
+        setFrontImage(imageSrc);
+      }
+    }
+  }, []);
+
+  const startDualCapture = React.useCallback(async () => {
+    setIsCapturing(true);
+    // First capture from current active camera
+    captureFromCamera(activeCamera === "back");
+
+    // Switch to opposite camera and wait for switch
+    const nextCamera = activeCamera === "front" ? "back" : "front";
+    setIsBackCamera(nextCamera === "back");
+
+    // Reset camera ready state
+    isCameraReady.current = false;
+
+    // Wait for camera to be ready
+    await new Promise((resolve) => {
+      const checkReady = setInterval(() => {
+        if (isCameraReady.current) {
+          clearInterval(checkReady);
+          resolve(true);
+        }
+      }, 100);
+    });
+
+    // Start countdown
+    let count = 3;
+    const countdownInterval = setInterval(() => {
+      setCountdown(count - 1);
+      count -= 1;
+      if (count === 0) {
+        clearInterval(countdownInterval);
+        setTimeout(() => {
+          captureFromCamera(nextCamera === "back");
+          setIsCapturing(false);
+          setCountdown(3);
+          setIsBackCamera(activeCamera === "back");
+        }, 1000);
+      }
+    }, 1000);
+  }, [captureFromCamera, activeCamera]);
+
+  // Called when the user media stream starts
+  const handleUserMedia = React.useCallback((stream: any) => {
+    const checkStream = () => {
+      const attemptCapture = () => {
+        try {
+          const screenshot = webcamRef.current?.getScreenshot();
+          if (screenshot) {
+            // TODO: Check for failed stream
+
+            setIsLoading(false);
+            isCameraReady.current = true;
+            return true;
+          }
+          setTimeout(attemptCapture, 100);
+          return false;
+        } catch (error) {
+          setTimeout(attemptCapture, 100);
+          return false;
+        }
+      };
+
+      return attemptCapture();
+    };
+
+    checkStream();
+  }, []);
+
+  return (
+    <div className="h-screen">
+      <div className="fixed inset-0">
+        <div className="relative h-full">
+          {/* Preview section */}
+          {(frontImage || backImage) && !isCapturing && (
+            <div className="absolute inset-0 z-10">
+              {/* Full screen active image */}
+              <img
+                src={(activeCamera === "front" ? frontImage : backImage) || ""}
+                alt={`${activeCamera} capture`}
+                className="w-full h-full object-cover"
+              />
+
+              {/* Thumbnail of inactive image */}
+              {frontImage && backImage && (
+                <button
+                  onClick={switchCamera}
+                  className="absolute top-16 right-4 z-20 bg-white/80 p-1 rounded-lg backdrop-blur-sm"
+                >
+                  <img
+                    src={
+                      activeCamera === "front" ? backImage : frontImage || ""
+                    }
+                    alt={`${
+                      activeCamera === "front" ? "Back" : "Front"
+                    } capture`}
+                    className="w-24 rounded-md"
+                  />
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Camera view */}
+          <div className="h-full">
+            <h2 className="absolute top-4 left-0 right-0 text-center text-white z-10 text-xl font-semibold">
+              dailysnap
+            </h2>
+            <div className="relative h-full">
+              <Webcam
+                ref={webcamRef}
+                audio={false}
+                mirrored={!isBackCamera}
+                screenshotFormat="image/jpeg"
+                videoConstraints={{
+                  deviceId: isBackCamera
+                    ? backDevice?.deviceId
+                    : frontDevice?.deviceId,
+                  facingMode: isBackCamera ? "environment" : "user",
+                }}
+                className={`w-full h-full object-cover ${
+                  isLoading ? "opacity-0" : "opacity-100"
+                }`}
+                onUserMedia={handleUserMedia}
+                onClick={handleDoubleTap}
+                onError={(e) => {
+                  console.error("Error accessing camera:", e);
+                  setIsLoading(false);
+                }}
+              />
+              {isLoading && (
+                <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                  <div className="flex flex-col items-center justify-center gap-4">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+                    {devices === undefined ? (
+                      <p>Waiting for camera permission...</p>
+                    ) : (
+                      devices.length === 0 && <p>No camera devices found</p>
+                    )}
+                  </div>
+                </div>
+              )}
+              {isCapturing && isCameraReady.current && (
+                <div className="fixed inset-0 flex items-center justify-center z-20">
+                  <div className="bg-white/80 w-32 h-32 flex items-center justify-center text-6xl font-bold rounded-full backdrop-blur-sm">
+                    {countdown + 1}
+                  </div>
+                </div>
+              )}
+              <div className="absolute bottom-8 right-0 left-0 flex justify-between px-4">
+                {!isCapturing && !frontImage && !backImage && (
+                  <>
+                    <div className="w-14"></div>
+                    <button
+                      onClick={startDualCapture}
+                      className="bg-white/80 p-4 rounded-full disabled:opacity-50 backdrop-blur-sm mx-auto"
+                      disabled={!backDevice || !frontDevice || isLoading}
+                      aria-label="Capture from both cameras"
+                    >
+                      <Camera className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={switchCamera}
+                      className="bg-white/80 p-4 rounded-full disabled:opacity-50 backdrop-blur-sm"
+                      disabled={!backDevice || !frontDevice || isLoading}
+                      aria-label={`Switch to ${
+                        activeCamera === "front" ? "Back" : "Front"
+                      } Camera`}
+                    >
+                      <RefreshCcw className="w-6 h-6" />
+                    </button>
+                  </>
+                )}
+                {!isCapturing && frontImage && backImage && (
+                  <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-4 z-20">
+                    <button
+                      onClick={() => {
+                        setFrontImage(null);
+                        setBackImage(null);
+                      }}
+                      className="bg-white/80 p-4 rounded-full disabled:opacity-50 backdrop-blur-sm flex items-center gap-2"
+                      aria-label="Retake photos"
+                    >
+                      <RotateCcw className="w-6 h-6" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        // Add your proceed logic here
+                        console.log("Proceed with images:", {
+                          frontImage,
+                          backImage,
+                        });
+                      }}
+                      className="bg-white/80 p-4 rounded-full disabled:opacity-50 backdrop-blur-sm flex items-center gap-2"
+                      aria-label="Proceed with photos"
+                    >
+                      <ArrowRight className="w-6 h-6" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <Link
+        href="/"
+        className="fixed top-4 left-4 z-10 bg-white/80 p-3 rounded-full backdrop-blur-sm"
+        aria-label="Go back"
+      >
+        <ArrowLeft className="w-6 h-6" />
+      </Link>
+    </div>
+  );
+}

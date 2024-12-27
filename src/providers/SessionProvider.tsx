@@ -71,8 +71,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const load = async () => {
-      setContext(await sdk.context);
-      sdk.actions.ready();
+      try {
+        const awaitedContext = await sdk.context;
+        // awaitedContext.client.added = true;
+        setContext(awaitedContext);
+        sdk.actions.ready();
+      } catch (error) {
+        // console.error("Error loading SDK:", error);
+      }
     };
     if (sdk && !isSDKLoaded) {
       setIsSDKLoaded(true);
