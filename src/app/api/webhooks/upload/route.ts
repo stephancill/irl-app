@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
-import { db } from "../../../../lib/db";
+import { db } from "@/lib/db";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -44,8 +44,6 @@ export async function POST(request: Request) {
       backImageUrl: body.secure_url,
     });
   }
-
-  console.log(query.compile());
 
   await query.execute();
 

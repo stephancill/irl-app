@@ -12,11 +12,18 @@ import {
   useState,
 } from "react";
 
-async function fetchUser(token: string): Promise<User> {
+async function fetchUser({
+  message,
+  signature,
+  challengeId,
+}: {
+  message: string;
+  signature: string;
+  challengeId: string;
+}): Promise<User> {
   const response = await fetch("/api/auth", {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    method: "POST",
+    body: JSON.stringify({ message, signature, challengeId }),
   });
 
   if (!response.ok) {
@@ -30,6 +37,21 @@ async function fetchUser(token: string): Promise<User> {
   }
 
   return user;
+}
+
+async function fetchChallenge(challengeId: string): Promise<string> {
+  const response = await fetch("/api/challenge", {
+    method: "POST",
+    body: JSON.stringify({ challengeId }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch challenge");
+  }
+
+  const { challenge } = await response.json();
+
+  return challenge;
 }
 
 interface SessionContextType {
@@ -56,10 +78,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     refetch,
   } = useQuery({
     queryKey: ["user"],
-    queryFn: () => {
+    queryFn: async () => {
       if (!context?.user?.fid) return;
-      // TODO: Pass actual token
-      return fetchUser(context.user.fid.toString());
+
+      const challengeId = crypto.randomUUID();
+      const challenge = await fetchChallenge(challengeId);
+
+      const result = await sdk.actions.signIn({ nonce: challenge });
+
+      return fetchUser({
+        ...result,
+        challengeId,
+      });
     },
     retry: false,
     enabled: !!context?.user?.fid,

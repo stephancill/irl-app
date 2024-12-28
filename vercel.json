@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/cron/cleanup-posts",
+      "schedule": "*/1 * * * *"
+    },
+    {
+      "path": "/cron/choose-times",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}

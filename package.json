@@ -16,9 +16,10 @@
   "dependencies": {
     "@bull-board/api": "^6.5.4",
     "@bull-board/express": "^6.5.4",
+    "@farcaster/auth-client": "^0.3.0",
     "@farcaster/core": "^0.15.6",
     "@farcaster/frame-node": "^0.0.10",
-    "@farcaster/frame-sdk": "^0.0.16",
+    "@farcaster/frame-sdk": "^0.0.22",
     "@lucia-auth/adapter-postgresql": "^3.1.2",
     "@radix-ui/react-avatar": "^1.1.2",
     "@radix-ui/react-scroll-area": "^1.2.2",
@@ -46,8 +47,10 @@
     "react-dom": "^19.0.0",
     "react-intersection-observer": "^9.14.0",
     "react-webcam": "^7.2.0",
+    "siwe": "^2.3.2",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
+    "viem": "^2.21.57",
     "zod": "^3.24.1"
   },
   "devDependencies": {

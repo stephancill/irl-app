@@ -19,7 +19,7 @@ function getJobId(timezone: string, date: Date) {
   return `${timezone}-${dateString}`;
 }
 
-async function main() {
+export async function queueTimezoneJobs() {
   const timezoneJobsData = ANCHOR_TIMEZONES.map((tz) => {
     const date = getBoundedRandomTime(tz);
     return {
@@ -45,8 +45,3 @@ async function main() {
     })
   );
 }
-
-main().then(() => {
-  console.log("Done");
-  process.exit(0);
-});

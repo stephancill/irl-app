@@ -1,5 +1,6 @@
 import { ANCHOR_TIMEZONES } from "../lib/constants";
 import { alertsTimezonesQueue } from "../lib/queue";
+import { queueTimezoneJobs } from "./queue-timezone";
 
 // Mock the dependencies
 jest.mock("../lib/queue");
@@ -12,8 +13,7 @@ describe("choose-times task", () => {
   it("should queue a job for each timezone", async () => {
     const now = Date.now();
 
-    // Import the file to run the main function
-    await import("../tasks/choose-times");
+    await queueTimezoneJobs();
 
     // Check that addBulk was called once
     expect(alertsTimezonesQueue.addBulk).toHaveBeenCalledTimes(1);

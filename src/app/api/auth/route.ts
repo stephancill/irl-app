@@ -7,6 +7,9 @@ import { User } from "@/types/user";
 import { UserDataType } from "@farcaster/core";
 import { sql } from "kysely";
 import { NextRequest } from "next/server";
+import { parseSiweMessage } from "viem/siwe";
+import { createAppClient, viemConnector } from "@farcaster/auth-client";
+import { redis } from "@/lib/redis";
 
 const selectUserWithAlert = db
   .selectFrom("users")
@@ -34,16 +37,49 @@ const selectUserWithAlert = db
     "latestAlert.id as latestAlertId",
   ]);
 
-export async function GET(req: NextRequest) {
-  // TODO: Frames v2 tokens not yet implemented, so will just be the fid
-  const token = lucia.readBearerToken(req.headers.get("Authorization") ?? "");
+export async function POST(req: NextRequest) {
+  const { message, signature, challengeId } = await req.json();
 
-  if (!token) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  const { nonce, domain, expirationTime } = parseSiweMessage(message);
+
+  if (!signature || !nonce || !challengeId) {
+    console.error("Missing required fields", {
+      signature,
+      nonce,
+      challengeId,
+    });
+    return Response.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  // Exchange token for fid
-  const fid = await exchangeTokenForFid(token);
+  const challenge = await redis.get(`challenge:${challengeId}`);
+
+  if (!challenge) {
+    console.error("Challenge not found", { challengeId });
+    return Response.json({ error: "Challenge not found" }, { status: 400 });
+  }
+
+  if (nonce !== challenge) {
+    console.error("Invalid nonce", { nonce, challenge });
+    return Response.json({ error: "Invalid nonce" }, { status: 400 });
+  }
+
+  const appClient = createAppClient({
+    ethereum: viemConnector(),
+  });
+
+  const verifyResponse = await appClient.verifySignInMessage({
+    message,
+    signature,
+    domain: new URL(process.env.APP_URL ?? "").hostname,
+    nonce: challenge,
+  });
+
+  if (!verifyResponse.success) {
+    console.error("Invalid signature", { verifyResponse });
+    return Response.json({ error: "Invalid signature" }, { status: 400 });
+  }
+
+  const fid = verifyResponse.fid.toString();
 
   let dbUser: Omit<User, "postsRemaining" | "postsToday"> | undefined;
 
@@ -150,9 +186,4 @@ export async function GET(req: NextRequest) {
       },
     }
   );
-}
-
-async function exchangeTokenForFid(token: string): Promise<string> {
-  // TODO: Implement this
-  return token;
 }

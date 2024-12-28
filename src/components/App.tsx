@@ -71,7 +71,7 @@ export function App() {
       </div>
 
       <div className="space-y-4 py-4 flex flex-col gap-4 max-w-[400px] mx-auto w-full">
-        <pre>{JSON.stringify(user, null, 2)}</pre>
+        {/* <pre>{JSON.stringify(context, null, 2)}</pre> */}
 
         {data?.pages.map((page) =>
           page.posts?.map((post: PostResponse) => (
@@ -111,10 +111,12 @@ export function App() {
               size={"lg"}
               className="text-lg p-4 w-full"
               onClick={() => {
-                sdk.actions.addFrame();
+                sdk.actions.addFrame().then((result) => {
+                  alert(JSON.stringify(result, null, 2));
+                });
               }}
             >
-              install frame
+              add frame to post
             </Button>
           ) : (
             user &&
