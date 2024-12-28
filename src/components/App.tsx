@@ -11,6 +11,8 @@ import { Post } from "../types/post";
 import { PostView } from "./PostView";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
+import { RefreshCw, Zap } from "lucide-react";
+import Countdown, { zeroPad } from "react-countdown";
 
 type PostResponse = Post & {
   userId: string;
@@ -18,13 +20,8 @@ type PostResponse = Post & {
   timezone: string;
 };
 
-interface FeedResponse {
-  posts: PostResponse[];
-  nextCursor: string | null;
-}
-
 export function App() {
-  const { context } = useSession();
+  const { context, user } = useSession();
   const { ref, inView } = useInView();
 
   const {
@@ -34,6 +31,7 @@ export function App() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch,
   } = useInfiniteQuery({
     queryKey: ["feed"],
     queryFn: async ({ pageParam }) => {
@@ -43,6 +41,7 @@ export function App() {
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null,
+    retry: true,
   });
 
   // Load more when bottom is visible
@@ -58,10 +57,22 @@ export function App() {
   return (
     <div className="flex flex-col h-screen">
       <div className="sticky top-0 bg-background z-50 p-4 border-b max-w-[400px] mx-auto w-full">
-        <h1 className="text-xl font-bold">[redacted]</h1>
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold">[redacted]</h1>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-4 py-4 flex flex-col gap-4 max-w-[400px] mx-auto w-full">
+        <pre>{JSON.stringify(user, null, 2)}</pre>
+
         {data?.pages.map((page) =>
           page.posts?.map((post: PostResponse) => (
             <div key={post.id} className="flex flex-col gap-2">
@@ -73,7 +84,14 @@ export function App() {
                   </Avatar>
                   <p className="text-sm font-bold text-lg">{post.fid}</p>
                 </div>
-                <p className="text-sm text-muted-foreground">on time ⚡️</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-muted-foreground">
+                    {getRelativeTime(new Date(post.createdAt))}
+                  </p>
+                  {post.postOnTime && (
+                    <Zap fill="yellow" className="h-4 w-4 text-yellow-400" />
+                  )}
+                </div>
               </div>
               <PostView post={post} initialView={post.primaryImage} />
             </div>
@@ -99,11 +117,42 @@ export function App() {
               install frame
             </Button>
           ) : (
-            <Link href="/post" className="w-full">
-              <Button size={"lg"} className="text-lg p-4 w-full">
-                post
-              </Button>
-            </Link>
+            user &&
+            user.latestAlertExpiry && (
+              <Link href="/post" className="w-full">
+                <Button
+                  size={"lg"}
+                  className="text-lg p-4 w-full"
+                  disabled={user.postsRemaining <= 0}
+                >
+                  {user.postsRemaining <= 0 ? (
+                    "already posted"
+                  ) : (
+                    <>
+                      post{" "}
+                      {user.postsToday >= 1
+                        ? `again (${user.postsRemaining})`
+                        : user.latestAlertTime && (
+                            <Countdown
+                              date={new Date(user.latestAlertExpiry)}
+                              renderer={({ minutes, seconds }) => {
+                                const targetTime = new Date(
+                                  user.latestAlertExpiry!
+                                ).getTime();
+                                if (Date.now() > targetTime) {
+                                  return "late";
+                                }
+                                return `${zeroPad(minutes)}:${zeroPad(
+                                  seconds
+                                )}`;
+                              }}
+                            ></Countdown>
+                          )}
+                    </>
+                  )}
+                </Button>
+              </Link>
+            )
           )}
         </div>
       </div>

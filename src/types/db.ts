@@ -19,6 +19,7 @@ export interface UserSessionRow {
 export interface PostRow {
   id: Generated<string>;
   userId: string;
+  postAlertId: number;
   frontImageUrl: string | null;
   backImageUrl: string | null;
   createdAt: Generated<Date>;

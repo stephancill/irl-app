@@ -1,3 +1,4 @@
+import { sql } from "kysely";
 import { withAuth } from "../../../lib/auth";
 import { db } from "../../../lib/db";
 
@@ -10,15 +11,22 @@ export const GET = withAuth(async (req, user) => {
   let query = db
     .selectFrom("posts")
     .innerJoin("users", "users.id", "posts.userId")
+    .innerJoin("postAlerts", "postAlerts.id", "posts.postAlertId")
     .select([
       "posts.id",
       "posts.frontImageUrl",
       "posts.backImageUrl",
       "posts.primaryImage",
       "posts.createdAt",
+      "posts.postAlertId",
       "users.id as userId",
       "users.fid",
       "users.timezone",
+      "postAlerts.id as postAlertId",
+      "postAlerts.timeUtc as postAlertTimeUtc",
+      sql<Date>`posts.created_at < post_alerts.time_utc + INTERVAL '5 MINUTES'`.as(
+        "postOnTime"
+      ),
     ])
     .where("posts.createdAt", ">=", new Date(Date.now() - 24 * 60 * 60 * 1000))
     .orderBy("posts.createdAt", "desc")

@@ -6,7 +6,7 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("id", "varchar", (col) =>
       col.primaryKey().defaultTo(sql`gen_random_uuid()`)
     )
-    .addColumn("fid", "varchar", (col) => col.notNull())
+    .addColumn("fid", "varchar", (col) => col.notNull().unique())
     .addColumn("created_at", "timestamp", (col) =>
       col.notNull().defaultTo(sql`CURRENT_TIMESTAMP`)
     )
@@ -28,12 +28,24 @@ export async function up(db: Kysely<any>): Promise<void> {
     .execute();
 
   await db.schema
+    .createTable("post_alerts")
+    .addColumn("id", "integer", (col) =>
+      col.primaryKey().generatedAlwaysAsIdentity()
+    )
+    .addColumn("time_utc", "timestamptz", (col) => col.notNull().unique())
+    .addColumn("timezone", "text", (col) => col.notNull())
+    .execute();
+
+  await db.schema
     .createTable("posts")
     .addColumn("id", "varchar", (col) =>
       col.primaryKey().defaultTo(sql`gen_random_uuid()`)
     )
     .addColumn("user_id", "varchar", (col) =>
       col.notNull().references("users.id").onDelete("cascade")
+    )
+    .addColumn("post_alert_id", "integer", (col) =>
+      col.notNull().references("post_alerts.id").onDelete("cascade")
     )
     .addColumn("front_image_url", "varchar")
     .addColumn("back_image_url", "varchar")
@@ -42,15 +54,6 @@ export async function up(db: Kysely<any>): Promise<void> {
       col.notNull().defaultTo(sql`CURRENT_TIMESTAMP`)
     )
     .addColumn("deleted_at", "timestamptz")
-    .execute();
-
-  await db.schema
-    .createTable("post_alerts")
-    .addColumn("id", "integer", (col) =>
-      col.primaryKey().generatedAlwaysAsIdentity()
-    )
-    .addColumn("time_utc", "timestamptz", (col) => col.notNull())
-    .addColumn("timezone", "text", (col) => col.notNull())
     .execute();
 }
 

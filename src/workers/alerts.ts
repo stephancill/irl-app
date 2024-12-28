@@ -13,8 +13,8 @@ export const alertsBulkWorker = new Worker<AlertsBulkJobData>(
 
     await sendFrameNotifications({
       tokens,
-      title: "It's time to post your daily snap!",
-      body: "Post your snap within 5 minutes to be on time",
+      title: "it's time for your daily snap!",
+      body: "post within 5 minutes to be on time",
       url,
       targetUrl: process.env.APP_URL,
       notificationId: `dailysnap-${alertId}-${chunkId}`,

@@ -22,6 +22,7 @@ export async function sendFrameNotifications({
   notificationId,
   targetUrl,
 }: {
+  /** The title of the notification - max 32 character */
   title: string;
   body: string;
   tokens: string[];
@@ -52,18 +53,19 @@ export async function sendFrameNotifications({
     const responseBody = sendNotificationResponseSchema.safeParse(responseJson);
     if (responseBody.success === false) {
       // Malformed response
-      return { state: "error", error: responseBody.error.errors };
+      throw new Error("Malformed response");
     }
 
     if (responseBody.data.result.rateLimitedTokens.length) {
       // Rate limited
-      return { state: "rate_limit" };
+      throw new Error("Rate limited");
     }
 
     return { state: "success" };
   } else {
     // Error response
-    return { state: "error", error: responseJson };
+    const message = JSON.stringify(responseJson) || "Unknown error";
+    throw new Error(message);
   }
 }
 

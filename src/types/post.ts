@@ -4,4 +4,5 @@ export type Post = {
   frontImageUrl: string;
   backImageUrl: string;
   primaryImage: "back" | "front";
+  postOnTime: boolean;
 };

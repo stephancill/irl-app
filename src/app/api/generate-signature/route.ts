@@ -1,8 +1,10 @@
 import { withAuth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { postsAllowanceDetails } from "@/lib/posts";
+import { objectToMetadataString } from "@/lib/utils";
 import { v2 as cloudinary } from "cloudinary";
+import { sql } from "kysely";
 import { NextResponse } from "next/server";
-import { objectToMetadataString } from "../../../lib/utils";
-import { db } from "../../../lib/db";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -20,11 +22,46 @@ export const GET = withAuth(async (req, user) => {
     );
   }
 
+  // Get the latest post alert for the user
+  const dbUser = await db
+    .selectFrom("users")
+    .leftJoin(
+      db
+        .selectFrom("postAlerts")
+        .select(["id", "timeUtc", "timezone"])
+        .orderBy("timeUtc", "desc")
+        .$call((qb) => qb.limit(1))
+        .as("latestAlert"),
+      (join) => join.onRef("latestAlert.timezone", "=", "users.timezone")
+    )
+    .select([
+      "latestAlert.id as postAlertId",
+      sql<Date>`latest_alert.time_utc + INTERVAL '5 MINUTES'`.as(
+        "latestAlertExpiry"
+      ),
+    ])
+    .executeTakeFirstOrThrow();
+
+  if (!dbUser.postAlertId) {
+    throw new Error("No post alerts found for user");
+  }
+
+  const { postsRemaining } = await postsAllowanceDetails(
+    user.id,
+    dbUser.postAlertId,
+    dbUser.latestAlertExpiry
+  );
+
+  if (postsRemaining <= 0) {
+    return NextResponse.json({ error: "User cannot post" }, { status: 400 });
+  }
+
   const { id: postId } = await db
     .insertInto("posts")
     .values({
       userId: user.id,
       primaryImage: primaryType as "front" | "back",
+      postAlertId: dbUser.postAlertId,
     })
     .returning("id")
     .executeTakeFirstOrThrow();

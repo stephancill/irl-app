@@ -19,7 +19,6 @@ export const lucia = new Lucia(adapter, {
       id: attributes.id,
       createdAt: attributes.created_at,
       updatedAt: attributes.updated_at,
-      username: attributes.username,
     };
   },
 });
@@ -68,7 +67,6 @@ declare module "lucia" {
       id: string;
       created_at: Date;
       updated_at: Date;
-      username: string | null;
     };
   }
 }

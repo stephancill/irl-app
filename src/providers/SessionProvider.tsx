@@ -63,6 +63,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     },
     retry: false,
     enabled: !!context?.user?.fid,
+    refetchInterval: 1000 * 60, // every minute
   });
 
   const logout = () => {

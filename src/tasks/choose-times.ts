@@ -9,6 +9,16 @@ import { alertsTimezonesQueue } from "../lib/queue";
 import { getBoundedRandomTime } from "../lib/utils";
 import { TimezoneJobData } from "../types/jobs";
 
+function getJobId(timezone: string, date: Date) {
+  const dateString = date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+
+  return `${timezone}-${dateString}`;
+}
+
 async function main() {
   const timezoneJobsData = ANCHOR_TIMEZONES.map((tz) => {
     const date = getBoundedRandomTime(tz);
@@ -22,15 +32,21 @@ async function main() {
     timezoneJobsData.map((data) => {
       const date = new Date(data.date);
 
+      const localNow = new Date();
+
       return {
         name: data.timezone,
         data: data,
         opts: {
           delay: date.getTime() - Date.now(),
+          jobId: getJobId(data.timezone, localNow),
         },
       };
     })
   );
 }
 
-main();
+main().then(() => {
+  console.log("Done");
+  process.exit(0);
+});

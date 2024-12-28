@@ -12,13 +12,18 @@ export const timezonesWorker = new Worker<TimezoneJobData>(
 
     const time = new Date(date);
 
-    // Create new target date in db
+    // Create new target date in db if it doesn't exist
     const postAlert = await db
       .insertInto("postAlerts")
       .values({
         timeUtc: time,
         timezone: anchorTz,
       })
+      .onConflict((oc) =>
+        oc.column("timeUtc").doUpdateSet({
+          timezone: anchorTz,
+        })
+      )
       .returningAll()
       .executeTakeFirst();
 
