@@ -4,6 +4,8 @@ declare global {
       NEXT_PUBLIC_WC_PROJECT_ID: string;
       DATABASE_URL: string;
       APP_URL: string;
+      NEYNAR_API_KEY: string;
+      HUB_URL: string;
     }
   }
 }

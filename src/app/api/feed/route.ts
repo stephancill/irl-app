@@ -1,11 +1,34 @@
 import { withAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { sql } from "kysely";
+import { ANCHOR_TIMEZONES } from "../../../lib/constants";
+import { getMutuals, getUserDatasCached } from "../../../lib/farcaster";
+import { withCache } from "../../../lib/redis";
 
 export const GET = withAuth(async (req, user) => {
   const { searchParams } = new URL(req.url);
   const cursor = searchParams.get("cursor");
   const limit = 5;
+
+  const mutuals = await withCache(`farcaster:mutuals:${user.fid}`, () =>
+    getMutuals(user.fid)
+  );
+
+  // Filter out mutuals that are not in db
+  // TODO: When users >> we need to find a better way to do this
+  const allUserFids = await db.selectFrom("users").select(["fid"]).execute();
+  const allUserFidsSet = new Set(allUserFids.map((u) => u.fid));
+
+  const feedFids = [
+    ...mutuals.filter((m) => allUserFidsSet.has(m.fid)).map((m) => m.fid),
+    user.fid,
+  ];
+  const userDatas = await getUserDatasCached(feedFids);
+
+  const farcasterUsersByFid = userDatas.reduce((acc, m) => {
+    acc[m.fid] = m;
+    return acc;
+  }, {} as Record<number, (typeof userDatas)[number]>);
 
   // TODO: Only show posts from users that the user follows
   let query = db
@@ -32,6 +55,7 @@ export const GET = withAuth(async (req, user) => {
     .where("posts.deletedAt", "is", null)
     .where("posts.frontImageUrl", "is not", null)
     .where("posts.backImageUrl", "is not", null)
+    .where("users.fid", "in", feedFids)
     .orderBy("posts.createdAt", "desc")
     .limit(limit + 1);
 
@@ -47,7 +71,7 @@ export const GET = withAuth(async (req, user) => {
     .select(["id", "timeUtc", "timezone"])
     .where("timezone", "=", user.timezone)
     .orderBy("timeUtc", "desc")
-    .$call((qb) => qb.limit(1))
+    .$call((qb) => qb.limit(ANCHOR_TIMEZONES.length * 2))
     .executeTakeFirst();
 
   if (!latestAlert) {
@@ -72,12 +96,18 @@ export const GET = withAuth(async (req, user) => {
     }));
   }
 
+  const users = posts.reduce((acc, post) => {
+    acc[post.fid] = farcasterUsersByFid[post.fid];
+    return acc;
+  }, {} as typeof farcasterUsersByFid);
+
   // Check if there are more posts
   const hasMore = posts.length > limit;
   const nextPosts = hasMore ? posts.slice(0, -1) : posts;
 
   return Response.json({
     posts: nextPosts,
+    users,
     nextCursor: hasMore
       ? posts[posts.length - 2].createdAt.toISOString()
       : null,

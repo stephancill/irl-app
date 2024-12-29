@@ -1,52 +1,22 @@
 import { lucia } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getUserData } from "@/lib/farcaster";
-import { postsAllowanceDetails } from "@/lib/posts";
-import { determineTimezone, parseGeo } from "@/lib/utils";
-import { User } from "@/types/user";
-import { UserDataType } from "@farcaster/core";
-import { sql } from "kysely";
-import { NextRequest } from "next/server";
-import { parseSiweMessage } from "viem/siwe";
-import { createAppClient, viemConnector } from "@farcaster/auth-client";
 import { redis } from "@/lib/redis";
+import { determineTimezone, parseGeo } from "@/lib/utils";
+import { createAppClient, viemConnector } from "@farcaster/auth-client";
+import { UserDataType } from "@farcaster/core";
+import { NextRequest } from "next/server";
 
-const selectUserWithAlert = db
-  .selectFrom("users")
-  .leftJoin(
-    db
-      .selectFrom("postAlerts")
-      .select(["id", "timeUtc", "timezone"])
-      .orderBy("timeUtc", "desc")
-      .$call((qb) => qb.limit(1))
-      .as("latestAlert"),
-    (join) => join.onRef("latestAlert.timezone", "=", "users.timezone")
-  )
-  .select([
-    "users.id",
-    "users.fid",
-    "users.timezone",
-    "users.notificationUrl",
-    "users.notificationToken",
-    "users.createdAt",
-    "users.updatedAt",
-    "latestAlert.timeUtc as latestAlertTime",
-    sql<Date>`latest_alert.time_utc + INTERVAL '5 MINUTES'`.as(
-      "latestAlertExpiry"
-    ),
-    "latestAlert.id as latestAlertId",
-  ]);
+const selectUser = db.selectFrom("users").selectAll();
 
 export async function POST(req: NextRequest) {
   const { message, signature, challengeId } = await req.json();
 
-  const { nonce, domain, expirationTime } = parseSiweMessage(message);
-
-  if (!signature || !nonce || !challengeId) {
+  if (!signature || !challengeId || !message) {
     console.error("Missing required fields", {
       signature,
-      nonce,
       challengeId,
+      message,
     });
     return Response.json({ error: "Missing required fields" }, { status: 400 });
   }
@@ -56,11 +26,6 @@ export async function POST(req: NextRequest) {
   if (!challenge) {
     console.error("Challenge not found", { challengeId });
     return Response.json({ error: "Challenge not found" }, { status: 400 });
-  }
-
-  if (nonce !== challenge) {
-    console.error("Invalid nonce", { nonce, challenge });
-    return Response.json({ error: "Invalid nonce" }, { status: 400 });
   }
 
   const appClient = createAppClient({
@@ -79,12 +44,12 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Invalid signature" }, { status: 400 });
   }
 
-  const fid = verifyResponse.fid.toString();
+  const fid = verifyResponse.fid;
 
-  let dbUser: Omit<User, "postsRemaining" | "postsToday"> | undefined;
+  let dbUser;
 
   // Check if the fid is already registered
-  const existingUser = await selectUserWithAlert
+  const existingUser = await selectUser
     .where("fid", "=", fid)
     .executeTakeFirst();
 
@@ -110,7 +75,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Get the user with the alert after creation
-        dbUser = await selectUserWithAlert
+        dbUser = await selectUser
           .where("id", "=", updatedUser.id)
           .executeTakeFirst();
       }
@@ -143,7 +108,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Get the user with the alert after creation
-      dbUser = await selectUserWithAlert
+      dbUser = await selectUser
         .where("users.id", "=", newUser.id)
         .executeTakeFirst();
     } catch (error) {
@@ -161,23 +126,11 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Failed to create user" }, { status: 500 });
   }
 
-  const allowanceDetails = await postsAllowanceDetails(
-    dbUser!.id,
-    dbUser!.latestAlertId,
-    dbUser!.latestAlertExpiry
-  );
-
-  const user: User = {
-    ...dbUser,
-    ...allowanceDetails,
-  };
-
   const session = await lucia.createSession(dbUser!.id, {});
 
   return Response.json(
     {
       success: true,
-      user,
       session,
     },
     {

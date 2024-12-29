@@ -2,7 +2,8 @@
 
 import { User } from "@/types/user";
 import sdk, { FrameContext } from "@farcaster/frame-sdk";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { Session } from "lucia";
 import { useRouter } from "next/navigation";
 import {
   createContext,
@@ -12,7 +13,7 @@ import {
   useState,
 } from "react";
 
-async function fetchUser({
+async function signIn({
   message,
   signature,
   challengeId,
@@ -20,23 +21,33 @@ async function fetchUser({
   message: string;
   signature: string;
   challengeId: string;
-}): Promise<User> {
-  const response = await fetch("/api/auth", {
+}): Promise<Session> {
+  const response = await fetch("/api/sign-in", {
     method: "POST",
     body: JSON.stringify({ message, signature, challengeId }),
   });
 
   if (!response.ok) {
-    throw new Error("Failed to fetch user");
+    throw new Error(`Failed to sign in ${response.status}`);
   }
 
-  const { user } = await response.json();
+  const { session } = await response.json();
 
-  if (!user) {
-    throw new Error("User not found");
+  if (!session) {
+    throw new Error("Could not create session");
   }
 
-  return user;
+  return session;
+}
+
+async function fetchUser(): Promise<User> {
+  const response = await fetch("/api/user");
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user ${response.status}`);
+  }
+
+  return response.json();
 }
 
 async function fetchChallenge(challengeId: string): Promise<string> {
@@ -56,10 +67,11 @@ async function fetchChallenge(challengeId: string): Promise<string> {
 
 interface SessionContextType {
   user: User | null | undefined;
+  session: Session | null | undefined;
   context: FrameContext | null | undefined;
   isLoading: boolean;
   isError: boolean;
-  refetch: () => void;
+  refetchUser: () => void;
   logout: () => void;
 }
 
@@ -71,14 +83,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [context, setContext] = useState<FrameContext>();
 
   const {
-    data: user,
-    isLoading,
-    isError,
-    isSuccess,
-    refetch,
-  } = useQuery({
-    queryKey: ["user"],
-    queryFn: async () => {
+    data: session,
+    mutate: signInMutation,
+    isPending: isSigningIn,
+  } = useMutation({
+    mutationFn: async () => {
       if (!context?.user?.fid) return;
 
       const challengeId = crypto.randomUUID();
@@ -86,15 +95,30 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       const result = await sdk.actions.signIn({ nonce: challenge });
 
-      return fetchUser({
+      return signIn({
         ...result,
         challengeId,
       });
     },
-    retry: false,
-    enabled: !!context?.user?.fid,
-    refetchInterval: 1000 * 60, // every minute
   });
+
+  const {
+    data: user,
+    isLoading,
+    isError,
+    refetch: refetchUser,
+  } = useQuery({
+    queryKey: ["user"],
+    queryFn: fetchUser,
+    enabled: isSDKLoaded && !!session,
+    refetchInterval: 1000 * 60, // 1 minute
+  });
+
+  useEffect(() => {
+    if (isSDKLoaded && context?.user?.fid) {
+      signInMutation();
+    }
+  }, [isSDKLoaded, context?.user?.fid, signInMutation]);
 
   const logout = () => {
     router.push("/logout");
@@ -133,10 +157,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     <SessionContext.Provider
       value={{
         user,
+        session,
         context,
-        isLoading: isLoading || !isSDKLoaded,
+        isLoading: isLoading || !isSDKLoaded || isSigningIn,
         isError,
-        refetch,
+        refetchUser,
         logout,
       }}
     >

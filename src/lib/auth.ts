@@ -20,6 +20,7 @@ export const lucia = new Lucia(adapter, {
       createdAt: attributes.created_at,
       updatedAt: attributes.updated_at,
       timezone: attributes.timezone,
+      fid: attributes.fid,
     };
   },
 });
@@ -66,6 +67,7 @@ declare module "lucia" {
     Lucia: typeof lucia;
     DatabaseUserAttributes: {
       id: string;
+      fid: number;
       created_at: Date;
       updated_at: Date;
       timezone: string;

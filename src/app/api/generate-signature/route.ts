@@ -5,6 +5,7 @@ import { objectToMetadataString } from "@/lib/utils";
 import { v2 as cloudinary } from "cloudinary";
 import { sql } from "kysely";
 import { NextResponse } from "next/server";
+import { ANCHOR_TIMEZONES } from "../../../lib/constants";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -30,7 +31,7 @@ export const GET = withAuth(async (req, user) => {
         .selectFrom("postAlerts")
         .select(["id", "timeUtc", "timezone"])
         .orderBy("timeUtc", "desc")
-        .$call((qb) => qb.limit(1))
+        .$call((qb) => qb.limit(ANCHOR_TIMEZONES.length * 2))
         .as("latestAlert"),
       (join) => join.onRef("latestAlert.timezone", "=", "users.timezone")
     )

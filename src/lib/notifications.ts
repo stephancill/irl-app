@@ -94,7 +94,7 @@ export async function sendFrameNotification({
     const user = await db
       .selectFrom("users")
       .selectAll()
-      .where("fid", "=", params.fid.toString())
+      .where("fid", "=", params.fid)
       .where("notificationUrl", "is not", null)
       .where("notificationToken", "is not", null)
       .executeTakeFirst();
@@ -131,7 +131,7 @@ export async function setUserNotificationDetails(
       notificationUrl: notificationDetails.url,
       notificationToken: notificationDetails.token,
     })
-    .where("fid", "=", fid.toString())
+    .where("fid", "=", fid)
     .execute();
 }
 
@@ -144,6 +144,6 @@ export async function deleteUserNotificationDetails(
       notificationUrl: null,
       notificationToken: null,
     })
-    .where("fid", "=", fid.toString())
+    .where("fid", "=", fid)
     .execute();
 }

@@ -2,7 +2,7 @@ import { Generated } from "kysely";
 
 export type UserRow = {
   id: Generated<string>;
-  fid: string;
+  fid: number;
   createdAt: Generated<Date>;
   updatedAt: Generated<Date>;
   timezone: string | null;

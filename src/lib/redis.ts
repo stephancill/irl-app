@@ -12,3 +12,20 @@ export const getRedisClient = (redisUrl: string, redisOpts?: RedisOptions) => {
 };
 
 export const redis = getRedisClient(REDIS_URL);
+
+export async function withCache<T>(
+  key: string,
+  fetcher: () => Promise<T>,
+  { ttl = 60 * 60 * 24 }: { ttl?: number } = {}
+) {
+  const cached = await redis.get(key);
+  if (cached) {
+    return JSON.parse(cached) as T;
+  }
+
+  const result = await fetcher();
+
+  await redis.setex(key, ttl, JSON.stringify(result));
+
+  return result;
+}

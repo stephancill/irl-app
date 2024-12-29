@@ -1,6 +1,6 @@
 export type User = {
   id: string;
-  fid: string;
+  fid: number;
   timezone: string | null;
   latestAlertId: number | null;
   latestAlertTime: Date | null;

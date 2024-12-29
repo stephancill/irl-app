@@ -7,7 +7,7 @@ export type TimezoneJobData = {
 
 export type AlertsBulkJobData = {
   notifications: {
-    fid: string;
+    fid: number;
     token: string;
   }[];
   url: string;

@@ -13,17 +13,27 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import { RefreshCw, Zap } from "lucide-react";
 import Countdown, { zeroPad } from "react-countdown";
+import { useToast } from "../hooks/use-toast";
+import { type UserDehydrated } from "@neynar/nodejs-sdk/build/api";
 
 type PostResponse = Post & {
   userId: string;
-  fid: string;
+  fid: number;
   timezone: string;
 };
 
-export function App() {
-  const { context, user } = useSession();
-  const { ref, inView } = useInView();
+type FeedResponse = {
+  posts: PostResponse[];
+  nextCursor: string;
+  users: Record<number, UserDehydrated>;
+};
 
+export function App() {
+  const { context, user, session, refetchUser } = useSession();
+  const { ref, inView } = useInView();
+  const { toast } = useToast();
+
+  // TODO: Live refresh
   const {
     data,
     isLoading,
@@ -37,11 +47,11 @@ export function App() {
     queryFn: async ({ pageParam }) => {
       const url = pageParam ? `/api/feed?cursor=${pageParam}` : "/api/feed";
       const res = await fetch(url);
-      return res.json();
+      const data = await res.json();
+      return data;
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null,
-    retry: true,
   });
 
   // Load more when bottom is visible
@@ -51,7 +61,20 @@ export function App() {
     }
   }, [inView, fetchNextPage, hasNextPage]);
 
-  if (isLoading) return <div>Loading...</div>;
+  useEffect(() => {
+    if (user?.id) {
+      refetch();
+    }
+  }, [user?.id]);
+
+  if (isLoading)
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+        <div className="flex flex-col items-center justify-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+        </div>
+      </div>
+    );
   if (error) return <div>Error loading feed</div>;
 
   return (
@@ -71,18 +94,24 @@ export function App() {
       </div>
 
       <div className="space-y-4 py-4 flex flex-col gap-4 max-w-[400px] mx-auto w-full">
-        {/* <pre>{JSON.stringify(context, null, 2)}</pre> */}
+        {/* <pre>{JSON.stringify(context, null, 2)}</pre>
+        <pre>{JSON.stringify(user, null, 2)}</pre>
+        <pre>{JSON.stringify(session, null, 2)}</pre> */}
 
-        {data?.pages.map((page) =>
+        {data?.pages.map((page: FeedResponse) =>
           page.posts?.map((post: PostResponse) => (
             <div key={post.id} className="flex flex-col gap-2">
               <div className="flex items-center justify-between px-2">
                 <div className="flex items-center gap-2">
                   <Avatar className="border">
-                    <AvatarImage src="" />
-                    <AvatarFallback>{post.fid}</AvatarFallback>
+                    <AvatarImage src={page.users[post.fid]?.pfp_url} />
+                    <AvatarFallback>
+                      {page.users[post.fid]?.username}
+                    </AvatarFallback>
                   </Avatar>
-                  <p className="text-sm font-bold text-lg">{post.fid}</p>
+                  <p className="text-sm font-bold text-lg">
+                    {page.users[post.fid]?.username}
+                  </p>
                 </div>
                 <div className="flex items-center gap-2">
                   <p className="text-sm text-muted-foreground">
@@ -112,7 +141,13 @@ export function App() {
               className="text-lg p-4 w-full"
               onClick={() => {
                 sdk.actions.addFrame().then((result) => {
-                  alert(JSON.stringify(result, null, 2));
+                  if (result.added) {
+                    refetchUser();
+                    toast({
+                      title: "Frame added",
+                      description: "you can now post",
+                    });
+                  }
                 });
               }}
             >

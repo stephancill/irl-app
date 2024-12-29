@@ -1,5 +1,5 @@
-import { v2 as cloudinary } from "cloudinary";
 import { db } from "@/lib/db";
+import { v2 as cloudinary } from "cloudinary";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
