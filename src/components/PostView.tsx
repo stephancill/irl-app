@@ -1,6 +1,7 @@
 import { Post } from "../types/post";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EyeOff } from "lucide-react";
 
 interface PostViewProps {
   post: Post;
@@ -36,7 +37,14 @@ export function PostView({ post, initialView = "front" }: PostViewProps) {
             onLoad={() => setIsMainLoading(false)}
           />
         ) : (
-          <div className={placeholderClass} />
+          <div
+            className={`${placeholderClass} flex flex-col items-center justify-center gap-2`}
+          >
+            <EyeOff className="w-6 h-6 text-gray-500" />
+            <span className="text-gray-500 text-center">
+              create a post to view other posts
+            </span>
+          </div>
         )}
       </div>
 
