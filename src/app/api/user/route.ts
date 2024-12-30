@@ -40,8 +40,15 @@ export const GET = withAuth(async (req, luciaUser) => {
   );
 
   const user: User = {
-    ...dbUser,
-    ...allowanceDetails,
+    fid: dbUser.fid,
+    id: dbUser.id,
+    timezone: dbUser.timezone,
+    latestAlertId: dbUser.latestAlertId,
+    latestAlertTime: dbUser.latestAlertTime,
+    latestAlertExpiry: dbUser.latestAlertExpiry,
+    postsRemaining: allowanceDetails.postsRemaining,
+    postsToday: allowanceDetails.postsToday,
+    notificationsEnabled: dbUser.notificationUrl !== null,
   };
 
   return Response.json(user);

@@ -40,7 +40,7 @@ async function signIn({
   return session;
 }
 
-async function fetchUser(): Promise<User> {
+export async function fetchUser(): Promise<User> {
   const response = await fetch("/api/user");
 
   if (!response.ok) {

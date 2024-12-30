@@ -25,3 +25,21 @@ export const GET = withAuth<{ params: Promise<{ postId: string }> }>(
     return Response.json({ post, isReady });
   }
 );
+
+export const DELETE = withAuth<{ params: Promise<{ postId: string }> }>(
+  async (req, user, context) => {
+    const { postId } = await context.params;
+
+    if (!postId) {
+      return Response.json({ error: "Missing postId" }, { status: 400 });
+    }
+
+    await db
+      .deleteFrom("posts")
+      .where("id", "=", postId)
+      .where("userId", "=", user.id)
+      .execute();
+
+    return Response.json({ success: true });
+  }
+);

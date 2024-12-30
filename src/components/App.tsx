@@ -3,7 +3,7 @@
 import sdk from "@farcaster/frame-sdk";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
 import { getRelativeTime } from "../lib/utils";
 import { useSession } from "../providers/SessionProvider";
@@ -11,11 +11,24 @@ import { Post } from "../types/post";
 import { PostView } from "./PostView";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
-import { RefreshCw, Zap, TreeDeciduous } from "lucide-react";
+import {
+  RefreshCw,
+  Zap,
+  TreeDeciduous,
+  MoreVertical,
+  Trash,
+} from "lucide-react";
 import Countdown, { zeroPad } from "react-countdown";
 import { useToast } from "../hooks/use-toast";
 import { type UserDehydrated } from "@neynar/nodejs-sdk/build/api";
 import { Logo } from "./Logo";
+import { useWaitForNotifications } from "../hooks/use-wait-for-notifications";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 type PostResponse = Post & {
   userId: string;
@@ -38,6 +51,7 @@ export function App() {
   } = useSession();
   const { ref, inView } = useInView();
   const { toast } = useToast();
+  const { mutate: waitForNotifications } = useWaitForNotifications();
 
   // TODO: Live refresh
   const {
@@ -68,10 +82,8 @@ export function App() {
   }, [inView, fetchNextPage, hasNextPage]);
 
   useEffect(() => {
-    if (user?.id) {
-      refetch();
-    }
-  }, [user?.id]);
+    refetchUser();
+  }, []);
 
   if (isLoading || sessionLoading)
     return (
@@ -137,6 +149,45 @@ export function App() {
                           className="h-4 w-4 text-yellow-400"
                         />
                       )}
+                      {post.userId === user?.id && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={async () => {
+                                if (
+                                  confirm(
+                                    "Are you sure you want to delete this post?"
+                                  )
+                                ) {
+                                  const res = await fetch(
+                                    `/api/posts/${post.id}`,
+                                    {
+                                      method: "DELETE",
+                                    }
+                                  );
+                                  if (res.ok) {
+                                    refetch();
+                                    refetchUser();
+                                    toast({
+                                      title: "Post deleted",
+                                      description: "Your post has been deleted",
+                                    });
+                                  }
+                                }
+                              }}
+                            >
+                              <Trash className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   </div>
                   <PostView post={post} initialView={post.primaryImage} />
@@ -154,17 +205,27 @@ export function App() {
 
       <div className="fixed bottom-0 left-0 right-0 p-4 flex justify-center z-50">
         <div className="max-w-[400px] w-full">
-          {!context?.client.added ? (
+          {!context?.client.added && !user?.notificationsEnabled ? (
             <Button
               size={"lg"}
               className="text-lg p-4 w-full"
               onClick={() => {
                 sdk.actions.addFrame().then((result) => {
                   if (result.added) {
-                    refetchUser();
-                    toast({
-                      title: "Frame added",
-                      description: "you can now post",
+                    waitForNotifications(void 0, {
+                      onSuccess: () => {
+                        toast({
+                          title: "frame added",
+                          description: "you can now post",
+                        });
+                      },
+                      onError: () => {
+                        toast({
+                          title: "error",
+                          description: "error adding frame",
+                          variant: "destructive",
+                        });
+                      },
                     });
                   }
                 });

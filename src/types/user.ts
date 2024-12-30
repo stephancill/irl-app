@@ -7,4 +7,5 @@ export type User = {
   latestAlertExpiry: Date | null;
   postsRemaining: number;
   postsToday: number;
+  notificationsEnabled: boolean;
 };

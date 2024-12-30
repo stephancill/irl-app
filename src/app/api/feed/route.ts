@@ -87,14 +87,8 @@ export const GET = withAuth(async (req, user) => {
   if (!canViewPosts) {
     posts = posts.map((post) => ({
       ...post,
-      frontImageUrl:
-        post.primaryImage === "front"
-          ? "/not-posted-primary.png"
-          : "/not-posted-secondary.png",
-      backImageUrl:
-        post.primaryImage === "back"
-          ? "/not-posted-primary.png"
-          : "/not-posted-secondary.png",
+      frontImageUrl: null,
+      backImageUrl: null,
     }));
   }
 

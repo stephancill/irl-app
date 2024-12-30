@@ -23,6 +23,7 @@ export async function GET() {
   return Response.json(config);
 }
 
+/** Domain associations for different environments */
 const accountAssociations = {
   "https://irl.steer.fun": {
     header:
