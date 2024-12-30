@@ -9,11 +9,11 @@ export async function GET() {
     accountAssociation: accountAssociations[appUrl],
     frame: {
       version: "1",
-      name: "dailysnap",
+      name: "irl",
       iconUrl: `${appUrl}/icon.png`,
       homeUrl: appUrl,
       imageUrl: `${appUrl}/opengraph-image`,
-      buttonTitle: "launch dailysnap",
+      buttonTitle: "launch",
       splashImageUrl: `${appUrl}/splash.png`,
       splashBackgroundColor: "#f7f7f7",
       webhookUrl: `${appUrl}/api/webhooks/farcaster`,
