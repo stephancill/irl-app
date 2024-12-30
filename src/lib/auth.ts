@@ -25,16 +25,19 @@ export const lucia = new Lucia(adapter, {
   },
 });
 
-export type UserRouteHandler<T extends Record<string, object | string> = {}> = (
+type NextContext = { params: Promise<{}> };
+
+export type UserRouteHandler<
+  T extends Record<string, object | string> = NextContext
+> = (
   req: NextRequest,
   user: NonNullable<Awaited<ReturnType<typeof lucia.validateSession>>["user"]>,
   context: T
 ) => Promise<Response>;
 
-export function withAuth<T extends Record<string, object | string> = {}>(
-  handler: UserRouteHandler<T>,
-  options: {} = {}
-) {
+export function withAuth<
+  T extends Record<string, object | string> = NextContext
+>(handler: UserRouteHandler<T>, options: {} = {}) {
   return async (req: NextRequest, context: T): Promise<Response> => {
     try {
       const cookieHeader = req.headers.get("Cookie");
