@@ -112,6 +112,7 @@ export function App() {
       </div>
 
       <div className="space-y-4 py-4 flex flex-col gap-4 max-w-[400px] mx-auto w-full">
+        {/* <pre>{JSON.stringify(user, null, 2)}</pre> */}
         {!data?.pages[0]?.posts?.length ? (
           <div className="flex flex-col items-center justify-center gap-2 p-8 text-center flex-1 min-h-[50vh]">
             <TreeDeciduous className="h-12 w-12 text-muted-foreground" />
