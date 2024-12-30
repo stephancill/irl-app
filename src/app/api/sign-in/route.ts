@@ -1,7 +1,7 @@
 import { lucia } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getUserData } from "@/lib/farcaster";
-import { redis } from "@/lib/redis";
+import { redisCache } from "@/lib/redis";
 import { determineTimezone, parseGeo } from "@/lib/utils";
 import { createAppClient, viemConnector } from "@farcaster/auth-client";
 import { UserDataType } from "@farcaster/core";
@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "Missing required fields" }, { status: 400 });
   }
 
-  const challenge = await redis.get(`challenge:${challengeId}`);
+  const challenge = await redisCache.get(`challenge:${challengeId}`);
 
   if (!challenge) {
     console.error("Challenge not found", { challengeId });

@@ -1,4 +1,4 @@
-import { redis } from "@/lib/redis";
+import { redisCache } from "@/lib/redis";
 import { CHALLENGE_DURATION_SECONDS } from "@/lib/constants";
 
 export async function POST(req: Request) {
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   ).toString("hex");
 
   // Set the challenge with an expiration
-  await redis.setex(
+  await redisCache.setex(
     `challenge:${challengeId}`,
     CHALLENGE_DURATION_SECONDS,
     challenge

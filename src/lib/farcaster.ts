@@ -1,6 +1,6 @@
 import { Message, UserDataAddMessage, UserDataType } from "@farcaster/core";
 import { Configuration, NeynarAPIClient } from "@neynar/nodejs-sdk";
-import { redis } from "./redis";
+import { redisCache } from "./redis";
 import { getUserDataKey } from "./keys";
 import { type User as NeynarUser } from "@neynar/nodejs-sdk/build/api";
 
@@ -37,7 +37,7 @@ export async function getUserDatasCached(
   );
 
   // Get users from cache
-  const cachedUsersRes = await redis.mget(
+  const cachedUsersRes = await redisCache.mget(
     fids.map((fid) => getUserDataKey(fid))
   );
   const cachedUsers: NeynarUser[] = cachedUsersRes
@@ -60,14 +60,14 @@ export async function getUserDatasCached(
   const res = await neynarClient.fetchBulkUsers({ fids: uncachedFids });
 
   // Cache fetched users
-  await redis.mset(
+  await redisCache.mset(
     res.users
       .map((user) => [getUserDataKey(user.fid), JSON.stringify(user)])
       .flat()
   );
 
   // Set expiration for all newly cached users
-  let multi = redis.multi();
+  let multi = redisCache.multi();
   for (const user of res.users) {
     multi = multi.expire(getUserDataKey(user.fid), 60 * 60 * 24 * 3); // 3 days
   }
