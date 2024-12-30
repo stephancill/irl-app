@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { Logo } from "../components/Logo";
 
 export const runtime = "edge";
 
@@ -14,7 +15,10 @@ export default async function Image() {
   return new ImageResponse(
     (
       <div tw="h-full w-full flex flex-col justify-center items-center relative bg-white">
-        <h1 tw="text-6xl">dailysnap</h1>
+        <Logo />
+        <p tw="text-sm text-muted-foreground">
+          daily photos from the real world
+        </p>
       </div>
     ),
     {

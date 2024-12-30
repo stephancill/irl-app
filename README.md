@@ -1,4 +1,4 @@
-# dailysnap
+# irl
 
 A BeReal-like app on the Farcaster network.
 

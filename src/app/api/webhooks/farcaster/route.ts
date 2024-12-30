@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
         await setUserNotificationDetails(fid, event.notificationDetails);
         await sendFrameNotification({
           fid,
-          title: "welcome to dailysnap!",
-          body: "you can now post daily snaps",
+          title: "welcome to irl!",
+          body: "you can now post your daily irl",
           targetUrl: process.env.APP_URL,
         });
       } else {

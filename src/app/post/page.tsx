@@ -288,7 +288,7 @@ export default function Page() {
           {/* Camera view */}
           <div className="h-full">
             <h2 className="absolute top-4 left-0 right-0 text-center text-white z-10 text-xl font-semibold">
-              dailysnap
+              irl
             </h2>
             <div className="relative h-full">
               {(!frontImage || !backImage) && (

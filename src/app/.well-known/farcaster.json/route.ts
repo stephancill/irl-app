@@ -12,7 +12,7 @@ export async function GET() {
       name: "irl",
       iconUrl: `${appUrl}/icon.png`,
       homeUrl: appUrl,
-      imageUrl: `${appUrl}/opengraph-image`,
+      imageUrl: `${appUrl}/og.png`,
       buttonTitle: "launch",
       splashImageUrl: `${appUrl}/splash.png`,
       splashBackgroundColor: "#f7f7f7",

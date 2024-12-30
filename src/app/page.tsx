@@ -5,12 +5,12 @@ const appUrl = process.env.APP_URL;
 
 const frame = {
   version: "next",
-  imageUrl: `${appUrl}/opengraph-image`,
+  imageUrl: `${appUrl}/og.png`,
   button: {
-    title: "launch dailysnap",
+    title: "launch irl",
     action: {
       type: "launch_frame",
-      name: "dailysnap",
+      name: "irl",
       url: appUrl,
       splashImageUrl: `${appUrl}/splash.png`,
       splashBackgroundColor: "#f7f7f7",
@@ -19,6 +19,8 @@ const frame = {
 };
 
 export const metadata: Metadata = {
+  title: "irl",
+  description: "daily photos from the real world",
   other: {
     "fc:frame": JSON.stringify(frame),
   },

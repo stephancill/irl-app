@@ -11,10 +11,11 @@ import { Post } from "../types/post";
 import { PostView } from "./PostView";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
-import { RefreshCw, Zap } from "lucide-react";
+import { RefreshCw, Zap, TreeDeciduous } from "lucide-react";
 import Countdown, { zeroPad } from "react-countdown";
 import { useToast } from "../hooks/use-toast";
 import { type UserDehydrated } from "@neynar/nodejs-sdk/build/api";
+import { Logo } from "./Logo";
 
 type PostResponse = Post & {
   userId: string;
@@ -29,7 +30,12 @@ type FeedResponse = {
 };
 
 export function App() {
-  const { context, user, session, refetchUser } = useSession();
+  const {
+    context,
+    user,
+    refetchUser,
+    isLoading: sessionLoading,
+  } = useSession();
   const { ref, inView } = useInView();
   const { toast } = useToast();
 
@@ -67,7 +73,7 @@ export function App() {
     }
   }, [user?.id]);
 
-  if (isLoading)
+  if (isLoading || sessionLoading)
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
         <div className="flex flex-col items-center justify-center gap-4">
@@ -81,7 +87,7 @@ export function App() {
     <div className="flex flex-col h-screen">
       <div className="sticky top-0 bg-background z-50 p-4 border-b max-w-[400px] mx-auto w-full">
         <div className="flex items-center justify-between">
-          <h1 className="text-xl font-bold">[redacted]</h1>
+          <Logo />
           <Button
             variant="ghost"
             size="sm"
@@ -94,37 +100,50 @@ export function App() {
       </div>
 
       <div className="space-y-4 py-4 flex flex-col gap-4 max-w-[400px] mx-auto w-full">
-        {/* <pre>{JSON.stringify(context, null, 2)}</pre>
-        <pre>{JSON.stringify(user, null, 2)}</pre>
-        <pre>{JSON.stringify(session, null, 2)}</pre> */}
-
-        {data?.pages.map((page: FeedResponse) =>
-          page.posts?.map((post: PostResponse) => (
-            <div key={post.id} className="flex flex-col gap-2">
-              <div className="flex items-center justify-between px-2">
-                <div className="flex items-center gap-2">
-                  <Avatar className="border">
-                    <AvatarImage src={page.users[post.fid]?.pfp_url} />
-                    <AvatarFallback>
-                      {page.users[post.fid]?.username}
-                    </AvatarFallback>
-                  </Avatar>
-                  <p className="text-sm font-bold text-lg">
-                    {page.users[post.fid]?.username}
-                  </p>
+        {!data?.pages[0]?.posts?.length ? (
+          <div className="flex flex-col items-center justify-center gap-2 p-8 text-center flex-1 min-h-[50vh]">
+            <TreeDeciduous className="h-12 w-12 text-muted-foreground" />
+            <p className="text-lg font-medium text-muted-foreground">
+              no posts yet
+            </p>
+            <p className="text-sm text-muted-foreground">
+              be the first to post!
+            </p>
+          </div>
+        ) : (
+          <>
+            {data?.pages.map((page: FeedResponse) =>
+              page.posts?.map((post: PostResponse) => (
+                <div key={post.id} className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between px-2">
+                    <div className="flex items-center gap-2">
+                      <Avatar className="border">
+                        <AvatarImage src={page.users[post.fid]?.pfp_url} />
+                        <AvatarFallback>
+                          {page.users[post.fid]?.username}
+                        </AvatarFallback>
+                      </Avatar>
+                      <p className="text-sm font-bold text-lg">
+                        {page.users[post.fid]?.username}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm text-muted-foreground">
+                        {getRelativeTime(new Date(post.createdAt))}
+                      </p>
+                      {post.postOnTime && (
+                        <Zap
+                          fill="yellow"
+                          className="h-4 w-4 text-yellow-400"
+                        />
+                      )}
+                    </div>
+                  </div>
+                  <PostView post={post} initialView={post.primaryImage} />
                 </div>
-                <div className="flex items-center gap-2">
-                  <p className="text-sm text-muted-foreground">
-                    {getRelativeTime(new Date(post.createdAt))}
-                  </p>
-                  {post.postOnTime && (
-                    <Zap fill="yellow" className="h-4 w-4 text-yellow-400" />
-                  )}
-                </div>
-              </div>
-              <PostView post={post} initialView={post.primaryImage} />
-            </div>
-          ))
+              ))
+            )}
+          </>
         )}
 
         {/* Loading indicator */}

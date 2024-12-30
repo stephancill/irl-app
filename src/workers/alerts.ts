@@ -13,11 +13,11 @@ export const alertsBulkWorker = new Worker<AlertsBulkJobData>(
 
     await sendFrameNotifications({
       tokens,
-      title: "it's time for your daily snap!",
+      title: "it's time for your irl!",
       body: "post within 5 minutes to be on time",
       url,
       targetUrl: process.env.APP_URL,
-      notificationId: `dailysnap-${alertId}-${chunkId}`,
+      notificationId: `irl-${alertId}-${chunkId}`,
     });
   },
   { connection: redisQueue }
