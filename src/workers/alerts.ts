@@ -1,6 +1,6 @@
 import { Worker } from "bullmq";
 import { ALERTS_BULK_QUEUE_NAME } from "../lib/constants";
-import { redis } from "../lib/redis";
+import { redisQueue } from "../lib/redis";
 import { AlertsBulkJobData } from "../types/jobs";
 import { sendFrameNotifications } from "../lib/notifications";
 
@@ -20,5 +20,5 @@ export const alertsBulkWorker = new Worker<AlertsBulkJobData>(
       notificationId: `dailysnap-${alertId}-${chunkId}`,
     });
   },
-  { connection: redis }
+  { connection: redisQueue }
 );

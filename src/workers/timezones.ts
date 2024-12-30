@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { alertsBulkQueue } from "@/lib/queue";
-import { redis } from "@/lib/redis";
+import { redisQueue } from "@/lib/redis";
 import { AlertsBulkJobData, TimezoneJobData } from "@/types/jobs";
 import { Worker } from "bullmq";
 import { ALERTS_TIMEZONES_QUEUE_NAME } from "../lib/constants";
@@ -87,6 +87,6 @@ export const timezonesWorker = new Worker<TimezoneJobData>(
     return jobs.length;
   },
   {
-    connection: redis,
+    connection: redisQueue,
   }
 );

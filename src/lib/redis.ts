@@ -1,6 +1,7 @@
 import Redis, { RedisOptions } from "ioredis";
 
-export const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+const REDIS_URL = process.env.REDIS_URL || "redis://localhost:6379";
+const REDIS_QUEUE_URL = process.env.REDIS_QUEUE_URL || "redis://localhost:6379";
 
 export const getRedisClient = (redisUrl: string, redisOpts?: RedisOptions) => {
   const client = new Redis(redisUrl, {
@@ -12,6 +13,7 @@ export const getRedisClient = (redisUrl: string, redisOpts?: RedisOptions) => {
 };
 
 export const redis = getRedisClient(REDIS_URL);
+export const redisQueue = getRedisClient(REDIS_QUEUE_URL);
 
 export async function withCache<T>(
   key: string,
