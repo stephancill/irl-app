@@ -65,10 +65,7 @@ export async function queueTimezoneJobs(definedTimes?: Record<string, Date>) {
 }
 
 if (require.main === module) {
-  const date = new Date();
-  queueTimezoneJobs({
-    "Europe/Paris": date,
-  })
+  queueTimezoneJobs()
     .then(() => console.log("Timezone jobs queued successfully"))
     .catch((error) => console.error("Error queuing timezone jobs:", error))
     .finally(() => process.exit(0));
