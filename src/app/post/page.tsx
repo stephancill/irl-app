@@ -43,7 +43,7 @@ export default function Page() {
   const [isCapturing, setIsCapturing] = React.useState(false);
   const [countdown, setCountdown] = React.useState(3);
   const [activeCamera, setActiveCamera] = React.useState<"front" | "back">(
-    "front"
+    "back"
   );
   const [isLoading, setIsLoading] = React.useState(true);
   const isCameraReady = React.useRef(false);
