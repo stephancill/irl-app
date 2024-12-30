@@ -17,6 +17,7 @@ import {
   TreeDeciduous,
   MoreVertical,
   Trash,
+  User,
 } from "lucide-react";
 import Countdown, { zeroPad } from "react-countdown";
 import { useToast } from "../hooks/use-toast";
@@ -150,14 +151,26 @@ export function App() {
                           className="h-4 w-4 text-yellow-400"
                         />
                       )}
-                      {post.userId === user?.id && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreVertical className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              sdk.actions.openUrl(
+                                `https://warpcast.com/${
+                                  page.users[post.fid]?.username
+                                }`
+                              );
+                            }}
+                          >
+                            <User className="h-4 w-4 mr-2" />
+                            View on Warpcast
+                          </DropdownMenuItem>
+                          {post.userId === user?.id && (
                             <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onClick={async () => {
@@ -186,9 +199,9 @@ export function App() {
                               <Trash className="h-4 w-4 mr-2" />
                               Delete
                             </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
                   <PostView post={post} initialView={post.primaryImage} />
