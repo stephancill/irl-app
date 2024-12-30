@@ -5,7 +5,7 @@ import { objectToMetadataString } from "@/lib/utils";
 import { v2 as cloudinary } from "cloudinary";
 import { sql } from "kysely";
 import { NextResponse } from "next/server";
-import { ANCHOR_TIMEZONES } from "../../../lib/constants";
+import { latestPostAlert } from "@/lib/queries";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -17,6 +17,9 @@ export const GET = withAuth(async (req, user) => {
   const primaryType = req.nextUrl.searchParams.get("primaryType");
 
   if (!primaryType || !["front", "back"].includes(primaryType)) {
+    console.error("Primary type is required ('front' or 'back')", {
+      primaryType,
+    });
     return NextResponse.json(
       { error: "Primary type is required ('front' or 'back')" },
       { status: 400 }
@@ -26,14 +29,8 @@ export const GET = withAuth(async (req, user) => {
   // Get the latest post alert for the user
   const dbUser = await db
     .selectFrom("users")
-    .leftJoin(
-      db
-        .selectFrom("postAlerts")
-        .select(["id", "timeUtc", "timezone"])
-        .orderBy("timeUtc", "desc")
-        .$call((qb) => qb.limit(ANCHOR_TIMEZONES.length * 2))
-        .as("latestAlert"),
-      (join) => join.onRef("latestAlert.timezone", "=", "users.timezone")
+    .leftJoin(latestPostAlert.as("latestAlert"), (join) =>
+      join.onRef("latestAlert.timezone", "=", "users.timezone")
     )
     .select([
       "latestAlert.id as postAlertId",
@@ -47,13 +44,14 @@ export const GET = withAuth(async (req, user) => {
     throw new Error("No post alerts found for user");
   }
 
-  const { postsRemaining } = await postsAllowanceDetails(
+  const allowanceDetails = await postsAllowanceDetails(
     user.id,
     dbUser.postAlertId,
     dbUser.latestAlertExpiry
   );
 
-  if (postsRemaining <= 0) {
+  if (allowanceDetails.postsRemaining <= 0) {
+    console.error("User cannot post", allowanceDetails);
     return NextResponse.json({ error: "User cannot post" }, { status: 400 });
   }
 

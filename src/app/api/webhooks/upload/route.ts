@@ -28,7 +28,6 @@ export async function POST(request: Request) {
 
   // Parse the body after verification
   const body = JSON.parse(bodyText);
-  console.log(body);
 
   let query = db
     .updateTable("posts")

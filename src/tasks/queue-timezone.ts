@@ -9,6 +9,12 @@ import { alertsTimezonesQueue } from "../lib/queue";
 import { getBoundedRandomTime } from "../lib/utils";
 import { TimezoneJobData } from "../types/jobs";
 
+/**
+ * Creates a job id for the timezone job to prevent multiple jobs from running on the same day
+ * @param timezone - The timezone to generate a job id for
+ * @param date - The date to generate a job id for
+ * @returns The job id
+ */
 function getJobId(timezone: string, date: Date) {
   const dateString = date.toLocaleDateString("en-US", {
     year: "numeric",
@@ -16,17 +22,29 @@ function getJobId(timezone: string, date: Date) {
     day: "2-digit",
   });
 
-  return `${timezone}-${dateString}`;
+  const id = `${timezone}-${dateString}`;
+
+  return id;
 }
 
-export async function queueTimezoneJobs() {
-  const timezoneJobsData = ANCHOR_TIMEZONES.map((tz) => {
-    const date = getBoundedRandomTime(tz);
-    return {
-      timezone: tz,
-      date: date.toISOString(),
-    } as TimezoneJobData;
-  });
+/**
+ * @param definedTimes - A map of timezone to date. If provided, the dates will be used instead of random dates.
+ */
+export async function queueTimezoneJobs(definedTimes?: Record<string, Date>) {
+  const timezoneJobsData = definedTimes
+    ? (Object.entries(definedTimes).map(([tz, date]) => ({
+        timezone: tz,
+        date: date.toISOString(),
+      })) satisfies TimezoneJobData[])
+    : (ANCHOR_TIMEZONES.map((tz) => {
+        const date = getBoundedRandomTime(tz);
+        return {
+          timezone: tz,
+          date: date.toISOString(),
+        };
+      }) satisfies TimezoneJobData[]);
+
+  console.log("timezoneJobsData", timezoneJobsData);
 
   await alertsTimezonesQueue.addBulk(
     timezoneJobsData.map((data) => {
@@ -44,4 +62,14 @@ export async function queueTimezoneJobs() {
       };
     })
   );
+}
+
+if (require.main === module) {
+  const date = new Date();
+  queueTimezoneJobs({
+    "Europe/Paris": date,
+  })
+    .then(() => console.log("Timezone jobs queued successfully"))
+    .catch((error) => console.error("Error queuing timezone jobs:", error))
+    .finally(() => process.exit(0));
 }

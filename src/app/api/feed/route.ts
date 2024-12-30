@@ -1,9 +1,9 @@
 import { withAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { getMutuals, getUserDatasCached } from "@/lib/farcaster";
+import { latestPostAlert } from "@/lib/queries";
+import { withCache } from "@/lib/redis";
 import { sql } from "kysely";
-import { ANCHOR_TIMEZONES } from "../../../lib/constants";
-import { getMutuals, getUserDatasCached } from "../../../lib/farcaster";
-import { withCache } from "../../../lib/redis";
 
 export const GET = withAuth(async (req, user) => {
   const { searchParams } = new URL(req.url);
@@ -66,12 +66,8 @@ export const GET = withAuth(async (req, user) => {
   let posts = await query.execute();
 
   // Replace image urls with placeholder if user hasn't posted today
-  const latestAlert = await db
-    .selectFrom("postAlerts")
-    .select(["id", "timeUtc", "timezone"])
+  const latestAlert = await latestPostAlert
     .where("timezone", "=", user.timezone)
-    .orderBy("timeUtc", "desc")
-    .$call((qb) => qb.limit(ANCHOR_TIMEZONES.length * 2))
     .executeTakeFirst();
 
   if (!latestAlert) {
@@ -91,8 +87,14 @@ export const GET = withAuth(async (req, user) => {
   if (!canViewPosts) {
     posts = posts.map((post) => ({
       ...post,
-      frontImageUrl: null,
-      backImageUrl: null,
+      frontImageUrl:
+        post.primaryImage === "front"
+          ? "/not-posted-primary.png"
+          : "/not-posted-secondary.png",
+      backImageUrl:
+        post.primaryImage === "back"
+          ? "/not-posted-primary.png"
+          : "/not-posted-secondary.png",
     }));
   }
 

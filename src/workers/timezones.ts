@@ -1,9 +1,9 @@
+import { db } from "@/lib/db";
+import { alertsBulkQueue } from "@/lib/queue";
+import { redis } from "@/lib/redis";
+import { AlertsBulkJobData, TimezoneJobData } from "@/types/jobs";
 import { Worker } from "bullmq";
 import { ALERTS_TIMEZONES_QUEUE_NAME } from "../lib/constants";
-import { db } from "../lib/db";
-import { alertsBulkQueue } from "../lib/queue";
-import { redis } from "../lib/redis";
-import { TimezoneJobData, AlertsBulkJobData } from "../types/jobs";
 
 export const timezonesWorker = new Worker<TimezoneJobData>(
   ALERTS_TIMEZONES_QUEUE_NAME,
@@ -20,7 +20,8 @@ export const timezonesWorker = new Worker<TimezoneJobData>(
         timezone: anchorTz,
       })
       .onConflict((oc) =>
-        oc.column("timeUtc").doUpdateSet({
+        oc.constraint("unique_timezone_time_utc").doUpdateSet({
+          timeUtc: time,
           timezone: anchorTz,
         })
       )
