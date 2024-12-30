@@ -240,7 +240,7 @@ export function App() {
               <Link href="/post" className="w-full">
                 <Button
                   size={"lg"}
-                  className="text-lg p-4 w-full"
+                  className="w-full"
                   disabled={user.postsRemaining <= 0}
                 >
                   {user.postsRemaining <= 0 ? (

@@ -8,6 +8,13 @@ export const ANCHOR_TIMEZONES = [
   "Asia/Hovd",
 ];
 
+export const ANCHOR_TIMEZONES_LABELS = {
+  "America/New_York": "Americas",
+  "Europe/Paris": "Europe",
+  "Asia/Tehran": "West Asia",
+  "Asia/Hovd": "East Asia",
+};
+
 // Jobs that queue alerts for a given timezone
 export const ALERTS_TIMEZONES_QUEUE_NAME = "alerts-timezones";
 

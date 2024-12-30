@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         await sendFrameNotification({
           fid,
           title: "welcome to irl!",
-          body: "you can now post your daily irl",
+          body: "posting is now available",
           targetUrl: process.env.APP_URL,
         });
       } else {
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
       await sendFrameNotification({
         fid,
         title: "notifications enabled",
-        body: "you will now receive notifications when it's time to post your daily snap",
+        body: "we'll notify you when it's time for your daily post",
         targetUrl: process.env.APP_URL,
       });
 
