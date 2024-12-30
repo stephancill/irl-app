@@ -30,7 +30,7 @@ export default function Page() {
   const { toast } = useToast();
   const router = useRouter();
   const [devices, setDevices] = React.useState<MediaDeviceInfo[]>();
-  const [isBackCamera, setIsBackCamera] = React.useState(false);
+  const [isBackCamera, setIsBackCamera] = React.useState(true);
   const [frontDevice, setFrontDevice] = React.useState<MediaDeviceInfo | null>(
     null
   );
@@ -50,9 +50,22 @@ export default function Page() {
 
   const switchCamera = React.useCallback(() => {
     setIsLoading(true);
-    const newCamera = activeCamera === "front" ? "back" : "front";
-    setActiveCamera(newCamera);
-    setIsBackCamera(newCamera === "back");
+
+    // Stop all tracks of the current stream
+    if (webcamRef.current?.video?.srcObject) {
+      const stream = webcamRef.current.video.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => track.stop());
+    }
+
+    // Add a small delay before switching cameras
+    setTimeout(() => {
+      const newCamera = activeCamera === "front" ? "back" : "front";
+      setActiveCamera(newCamera);
+      setIsBackCamera(newCamera === "back");
+
+      // Reset camera ready state
+      isCameraReady.current = false;
+    }, 300); // 300ms delay
   }, [activeCamera]);
 
   // Double tap handler
@@ -146,27 +159,34 @@ export default function Page() {
   }, [captureFromCamera, activeCamera]);
 
   // Called when the user media stream starts
-  const handleUserMedia = React.useCallback((stream: any) => {
+  const handleUserMedia = React.useCallback((stream: MediaStream) => {
+    // Store the stream in a ref for cleanup
+    if (webcamRef.current?.video) {
+      webcamRef.current.video.srcObject = stream;
+    }
+
     const checkStream = () => {
+      if (!webcamRef.current?.video) {
+        setTimeout(checkStream, 100);
+        return;
+      }
+
       const attemptCapture = () => {
         try {
           const screenshot = webcamRef.current?.getScreenshot();
           if (screenshot) {
-            // TODO: Check for failed stream
-
             setIsLoading(false);
             isCameraReady.current = true;
-            return true;
+            return;
           }
           setTimeout(attemptCapture, 100);
-          return false;
         } catch (error) {
+          console.error("Screenshot attempt failed:", error);
           setTimeout(attemptCapture, 100);
-          return false;
         }
       };
 
-      return attemptCapture();
+      attemptCapture();
     };
 
     checkStream();
@@ -308,10 +328,6 @@ export default function Page() {
                   }`}
                   onUserMedia={handleUserMedia}
                   onClick={handleDoubleTap}
-                  onError={(e) => {
-                    console.error("Error accessing camera:", e);
-                    setIsLoading(false);
-                  }}
                 />
               )}
               {isLoading && (
