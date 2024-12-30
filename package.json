@@ -11,6 +11,8 @@
     "test": "NODE_OPTIONS=--experimental-vm-modules jest",
     "schedule": "tsx src/tasks/choose-times.ts",
     "workers": "tsx src/workers/index.ts",
+    "task:cleanup-posts": "tsx src/tasks/cleanup-posts.ts",
+    "task:queue-timezone": "tsx src/tasks/queue-timezone.ts",
     "db:reset": "docker-compose down -v && docker-compose up -d"
   },
   "dependencies": {
