@@ -63,6 +63,7 @@ export function App() {
     hasNextPage,
     isFetchingNextPage,
     refetch,
+    isFetching,
   } = useInfiniteQuery({
     queryKey: ["feed"],
     queryFn: async ({ pageParam }) => {
@@ -107,7 +108,9 @@ export function App() {
             onClick={() => refetch()}
             className="text-muted-foreground hover:text-foreground"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw
+              className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+            />
           </Button>
         </div>
       </div>
