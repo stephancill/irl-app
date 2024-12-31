@@ -5,6 +5,7 @@ import sdk, { FrameContext } from "@farcaster/frame-sdk";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Session } from "lucia";
 import { useRouter } from "next/navigation";
+import posthog from "posthog-js";
 import {
   createContext,
   ReactNode,
@@ -140,6 +141,14 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       load();
     }
   }, [isSDKLoaded]);
+
+  useEffect(() => {
+    if (user) {
+      posthog.identify(user.id, {
+        fid: user.fid,
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     if (isLoading || !isSDKLoaded) return;

@@ -176,7 +176,7 @@ export function App() {
                               onClick={async () => {
                                 if (
                                   confirm(
-                                    "Are you sure you want to delete this post?"
+                                    "are you sure you want to delete this post?"
                                   )
                                 ) {
                                   const res = await fetch(
@@ -189,8 +189,8 @@ export function App() {
                                     refetch();
                                     refetchUser();
                                     toast({
-                                      title: "Post deleted",
-                                      description: "Your post has been deleted",
+                                      title: "post deleted",
+                                      description: "your post has been deleted",
                                     });
                                   }
                                 }
