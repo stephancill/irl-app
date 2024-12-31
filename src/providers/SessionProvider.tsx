@@ -6,6 +6,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Session } from "lucia";
 import { useRouter } from "next/navigation";
 import posthog from "posthog-js";
+import * as Sentry from "@sentry/nextjs";
 import {
   createContext,
   ReactNode,
@@ -145,6 +146,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (user) {
       posthog.identify(user.id, {
+        fid: user.fid,
+      });
+      Sentry.setUser({
+        id: user.id,
         fid: user.fid,
       });
     }
