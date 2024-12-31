@@ -4,7 +4,7 @@ import { useMutation } from "@tanstack/react-query";
 import { ArrowRight, Camera, RefreshCcw, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useEffect } from "react";
 import Webcam from "react-webcam";
 import { useToast } from "../../hooks/use-toast";
 import { AuthError } from "../../lib/errors";
@@ -35,7 +35,7 @@ export default function Page() {
   const { toast } = useToast();
   const router = useRouter();
   const [devices, setDevices] = React.useState<MediaDeviceInfo[]>();
-  const [isBackCamera, setIsBackCamera] = React.useState(true);
+  const [isBackCamera, setIsBackCamera] = React.useState(false);
   const [frontDevice, setFrontDevice] = React.useState<MediaDeviceInfo | null>(
     null
   );
@@ -48,10 +48,12 @@ export default function Page() {
   const [isCapturing, setIsCapturing] = React.useState(false);
   const [countdown, setCountdown] = React.useState(3);
   const [activeCamera, setActiveCamera] = React.useState<"front" | "back">(
-    "back"
+    "front"
   );
   const [isLoading, setIsLoading] = React.useState(true);
   const isCameraReady = React.useRef(false);
+  const [initialSwitchComplete, setInitialSwitchComplete] =
+    React.useState(false);
 
   const switchCamera = React.useCallback(() => {
     setIsLoading(true);
@@ -196,6 +198,13 @@ export default function Page() {
 
     checkStream();
   }, []);
+
+  useEffect(() => {
+    if (isCameraReady.current && !initialSwitchComplete) {
+      switchCamera();
+      setInitialSwitchComplete(true);
+    }
+  }, [isCameraReady.current, initialSwitchComplete]);
 
   const uploadMutation = useMutation({
     mutationFn: async () => {
