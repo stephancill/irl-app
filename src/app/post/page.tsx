@@ -26,6 +26,11 @@ const dataURItoBlob = (dataURI: string) => {
   return new Blob([ab], { type: mimeString });
 };
 
+const imageDimensions = {
+  width: 640 * 2,
+  height: 852 * 2,
+};
+
 export default function Page() {
   const { toast } = useToast();
   const router = useRouter();
@@ -109,7 +114,7 @@ export default function Page() {
   }, [handleDevices]);
 
   const captureFromCamera = React.useCallback((isBack: boolean) => {
-    const imageSrc = webcamRef.current?.getScreenshot();
+    const imageSrc = webcamRef.current?.getScreenshot(imageDimensions);
     if (imageSrc) {
       if (isBack) {
         setBackImage(imageSrc);
@@ -326,6 +331,8 @@ export default function Page() {
                   className={`w-full h-full object-cover ${
                     isLoading ? "opacity-0" : "opacity-100"
                   }`}
+                  width={imageDimensions.width}
+                  height={imageDimensions.height}
                   onUserMedia={handleUserMedia}
                   onClick={handleDoubleTap}
                 />
@@ -392,7 +399,11 @@ export default function Page() {
                       disabled={uploadMutation.isPending}
                       aria-label="Proceed with photos"
                     >
-                      <ArrowRight className="w-6 h-6" />
+                      {uploadMutation.isPending ? (
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900" />
+                      ) : (
+                        <ArrowRight className="w-6 h-6" />
+                      )}
                     </button>
                   </div>
                 )}
