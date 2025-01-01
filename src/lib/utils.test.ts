@@ -26,7 +26,7 @@ describe("getBoundedRandomTime", () => {
 
   it("should return a time between 9:00 and 23:59", () => {
     const timeZone = "America/New_York";
-    const result = getBoundedRandomTime(timeZone);
+    const { machineTimezone: result } = getBoundedRandomTime(timeZone);
 
     // Convert to timezone-specific time for checking hours
     const timeInZone = new Date(result.toLocaleString("en-US", { timeZone }));
@@ -38,7 +38,7 @@ describe("getBoundedRandomTime", () => {
 
   it("should return a date for tomorrow", () => {
     const timeZone = "America/New_York";
-    const result = getBoundedRandomTime(timeZone);
+    const { machineTimezone: result } = getBoundedRandomTime(timeZone);
     const now = new Date();
 
     // Convert both dates to timezone-specific time for comparison

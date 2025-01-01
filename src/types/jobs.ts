@@ -3,6 +3,8 @@ export type TimezoneJobData = {
   timezone: string;
   /** ISO string of the target time */
   date: string;
+  /** ISO string of the time in the user's timezone */
+  localTime: string;
 };
 
 export type AlertsBulkJobData = {

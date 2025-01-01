@@ -20,7 +20,10 @@ export function determineTimezone(longitude: number): string {
   return ANCHOR_TIMEZONES[(index - 1) % ANCHOR_TIMEZONES.length];
 }
 
-export function getBoundedRandomTime(timezone: string): Date {
+export function getBoundedRandomTime(timezone: string): {
+  targetTimezone: Date;
+  machineTimezone: Date;
+} {
   // Get timezone offset relative to system time
   const now = new Date();
   const nowInTargetTz = new Date(
@@ -42,7 +45,12 @@ export function getBoundedRandomTime(timezone: string): Date {
 
   tomorrowTarget.setHours(randomHour, randomMinutes, 0, 0);
 
-  return new Date(tomorrowTarget.getTime() - offset);
+  const machineTimezone = new Date(tomorrowTarget.getTime() - offset);
+
+  return {
+    targetTimezone: tomorrowTarget,
+    machineTimezone,
+  };
 }
 
 export function getRelativeTime(d1: Date, d2: Date = new Date()): string {

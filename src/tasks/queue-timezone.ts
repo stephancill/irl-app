@@ -35,12 +35,14 @@ export async function queueTimezoneJobs(definedTimes?: Record<string, Date>) {
     ? (Object.entries(definedTimes).map(([tz, date]) => ({
         timezone: tz,
         date: date.toISOString(),
+        localTime: date.toISOString(),
       })) satisfies TimezoneJobData[])
     : (ANCHOR_TIMEZONES.map((tz) => {
-        const date = getBoundedRandomTime(tz);
+        const { targetTimezone, machineTimezone } = getBoundedRandomTime(tz);
         return {
           timezone: tz,
-          date: date.toISOString(),
+          date: machineTimezone.toISOString(),
+          localTime: targetTimezone.toISOString(),
         };
       }) satisfies TimezoneJobData[]);
 
