@@ -23,3 +23,18 @@ export const ALERTS_BULK_QUEUE_NAME = "alerts-bulk";
 
 // Jobs that alert users
 export const ALERTS_QUEUE_NAME = "alerts";
+
+export const FRAME_METADATA = {
+  version: "next",
+  imageUrl: `${process.env.APP_URL}/og.png`,
+  button: {
+    title: "launch irl",
+    action: {
+      type: "launch_frame",
+      name: "irl",
+      url: process.env.APP_URL,
+      splashImageUrl: `${process.env.APP_URL}/splash.png`,
+      splashBackgroundColor: "#f7f7f7",
+    },
+  },
+};

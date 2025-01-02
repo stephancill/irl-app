@@ -67,7 +67,15 @@ export async function queueTimezoneJobs(definedTimes?: Record<string, Date>) {
 }
 
 if (require.main === module) {
-  queueTimezoneJobs()
+  const shouldQueueNow = process.argv.includes("--now");
+
+  const now = new Date();
+
+  const definedTimes = shouldQueueNow
+    ? Object.fromEntries(ANCHOR_TIMEZONES.map((tz) => [tz, now]))
+    : undefined;
+
+  queueTimezoneJobs(definedTimes)
     .then(() => console.log("Timezone jobs queued successfully"))
     .catch((error) => console.error("Error queuing timezone jobs:", error))
     .finally(() => process.exit(0));

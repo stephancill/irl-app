@@ -1,35 +1,27 @@
 "use client";
 
+import { Header } from "@/components/Header";
 import sdk from "@farcaster/frame-sdk";
+import { type UserDehydrated } from "@neynar/nodejs-sdk/build/api";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import Link from "next/link";
+import { RefreshCw, TreeDeciduous, UserPlus } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
-import { getRelativeTime } from "../lib/utils";
+import { useToast } from "../hooks/use-toast";
+import { generateWarpcastComposeUrl } from "../lib/utils";
 import { useSession } from "../providers/SessionProvider";
 import { Post } from "../types/post";
+import { PostButton } from "./PostButton";
 import { PostView } from "./PostView";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
-  RefreshCw,
-  Zap,
-  TreeDeciduous,
-  MoreVertical,
-  Trash,
-  User,
-} from "lucide-react";
-import Countdown, { zeroPad } from "react-countdown";
-import { useToast } from "../hooks/use-toast";
-import { type UserDehydrated } from "@neynar/nodejs-sdk/build/api";
-import { Logo } from "./Logo";
-import { useWaitForNotifications } from "../hooks/use-wait-for-notifications";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "./ui/dropdown-menu";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "./ui/dialog";
 
 type PostResponse = Post & {
   userId: string;
@@ -52,7 +44,10 @@ export function App() {
   } = useSession();
   const { ref, inView } = useInView();
   const { toast } = useToast();
-  const { mutate: waitForNotifications } = useWaitForNotifications();
+  const searchParams = useSearchParams();
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [tapCount, setTapCount] = useState(0);
+  const [debugMode, setDebugMode] = useState(false);
 
   // TODO: Live refresh
   const {
@@ -74,6 +69,7 @@ export function App() {
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null,
+    enabled: !!user,
   });
 
   // Load more when bottom is visible
@@ -87,6 +83,24 @@ export function App() {
     refetchUser();
   }, []);
 
+  // Add effect to check for share intent
+  useEffect(() => {
+    if (searchParams.get("intent") === "share") {
+      setShowShareModal(true);
+    }
+  }, [searchParams]);
+
+  // Add effect to handle tap count
+  useEffect(() => {
+    if (tapCount === 10) {
+      setDebugMode(true);
+      toast({
+        title: "Debug mode enabled",
+        description: "User debug information is now visible",
+      });
+    }
+  }, [tapCount]);
+
   if (isLoading || sessionLoading)
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -99,9 +113,17 @@ export function App() {
 
   return (
     <div className="flex flex-col h-screen">
-      <div className="sticky top-0 bg-background z-50 p-4 border-b max-w-[400px] mx-auto w-full">
-        <div className="flex items-center justify-between">
-          <Logo />
+      <Header onClick={() => setTapCount((count) => count + 1)}>
+        <div className="flex gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowShareModal(true)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <UserPlus className="h-4 w-4" />
+            invite
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -113,10 +135,51 @@ export function App() {
             />
           </Button>
         </div>
-      </div>
+      </Header>
+      <Dialog open={showShareModal} onOpenChange={setShowShareModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>invite your friends</DialogTitle>
+            <DialogDescription>
+              would you like to create a cast to invite your friends?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-end gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                navigator.clipboard.writeText(getReferralLink(user?.id));
+                toast({
+                  title: "link copied",
+                  description: "referral link copied to clipboard",
+                });
+                setShowShareModal(false);
+              }}
+            >
+              copy link
+            </Button>
+            <Button
+              onClick={() => {
+                const url = generateWarpcastComposeUrl("join me on irl!", [
+                  getReferralLink(user?.id),
+                ]);
+                sdk.actions.openUrl(url);
+                setShowShareModal(false);
+              }}
+            >
+              draft
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-4 py-4 flex flex-col gap-4 max-w-[400px] mx-auto w-full">
-        {/* <pre>{JSON.stringify(user, null, 2)}</pre> */}
+        {debugMode && (
+          <pre className="whitespace-pre-wrap break-words">
+            {JSON.stringify(user, null, 2)}
+            {JSON.stringify(context, null, 2)}
+          </pre>
+        )}
         {!data?.pages[0]?.posts?.length ? (
           <div className="flex flex-col items-center justify-center gap-2 p-8 text-center flex-1 min-h-[50vh]">
             <TreeDeciduous className="h-12 w-12 text-muted-foreground" />
@@ -131,84 +194,20 @@ export function App() {
           <>
             {data?.pages.map((page: FeedResponse) =>
               page.posts?.map((post: PostResponse) => (
-                <div key={post.id} className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-2">
-                      <Avatar className="border">
-                        <AvatarImage src={page.users[post.fid]?.pfp_url} />
-                        <AvatarFallback>
-                          {page.users[post.fid]?.username}
-                        </AvatarFallback>
-                      </Avatar>
-                      <p className="text-sm font-bold text-lg">
-                        {page.users[post.fid]?.username}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm text-muted-foreground">
-                        {getRelativeTime(new Date(post.createdAt))}
-                      </p>
-                      {post.postOnTime && (
-                        <Zap
-                          fill="yellow"
-                          className="h-4 w-4 text-yellow-400"
-                        />
-                      )}
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              sdk.actions.openUrl(
-                                `https://warpcast.com/${
-                                  page.users[post.fid]?.username
-                                }`
-                              );
-                            }}
-                          >
-                            <User className="h-4 w-4 mr-2" />
-                            View on Warpcast
-                          </DropdownMenuItem>
-                          {post.userId === user?.id && (
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={async () => {
-                                if (
-                                  confirm(
-                                    "are you sure you want to delete this post?"
-                                  )
-                                ) {
-                                  const res = await fetch(
-                                    `/api/posts/${post.id}`,
-                                    {
-                                      method: "DELETE",
-                                    }
-                                  );
-                                  if (res.ok) {
-                                    refetch();
-                                    refetchUser();
-                                    toast({
-                                      title: "post deleted",
-                                      description: "your post has been deleted",
-                                    });
-                                  }
-                                }
-                              }}
-                            >
-                              <Trash className="h-4 w-4 mr-2" />
-                              Delete
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
-                  <PostView post={post} initialView={post.primaryImage} />
-                </div>
+                <PostView
+                  key={post.id}
+                  post={post}
+                  user={user!}
+                  postUser={page.users[post.fid]}
+                  onDelete={() => {
+                    refetch();
+                    refetchUser();
+                    toast({
+                      title: "post deleted",
+                      description: "your post has been deleted",
+                    });
+                  }}
+                />
               ))
             )}
           </>
@@ -220,76 +219,12 @@ export function App() {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 p-4 flex justify-center z-50">
-        <div className="max-w-[400px] w-full">
-          {!context?.client.added && !user?.notificationsEnabled ? (
-            <Button
-              size={"lg"}
-              className="text-lg p-4 w-full"
-              onClick={() => {
-                sdk.actions.addFrame().then((result) => {
-                  if (result.added) {
-                    waitForNotifications(void 0, {
-                      onSuccess: () => {
-                        toast({
-                          title: "frame added",
-                          description: "you can now post",
-                        });
-                      },
-                      onError: () => {
-                        toast({
-                          title: "error",
-                          description: "error adding frame",
-                          variant: "destructive",
-                        });
-                      },
-                    });
-                  }
-                });
-              }}
-            >
-              add frame to post
-            </Button>
-          ) : (
-            user &&
-            user.latestAlertExpiry && (
-              <Link href="/post" className="w-full">
-                <Button
-                  size={"lg"}
-                  className="w-full"
-                  disabled={user.postsRemaining <= 0}
-                >
-                  {user.postsRemaining <= 0 ? (
-                    "already posted"
-                  ) : (
-                    <>
-                      post{" "}
-                      {user.postsToday >= 1
-                        ? `again (${user.postsRemaining})`
-                        : user.latestAlertTime && (
-                            <Countdown
-                              date={new Date(user.latestAlertExpiry)}
-                              renderer={({ minutes, seconds }) => {
-                                const targetTime = new Date(
-                                  user.latestAlertExpiry!
-                                ).getTime();
-                                if (Date.now() > targetTime) {
-                                  return "late";
-                                }
-                                return `${zeroPad(minutes)}:${zeroPad(
-                                  seconds
-                                )}`;
-                              }}
-                            ></Countdown>
-                          )}
-                    </>
-                  )}
-                </Button>
-              </Link>
-            )
-          )}
-        </div>
-      </div>
+      <PostButton />
     </div>
   );
+}
+
+function getReferralLink(userId?: string) {
+  if (!userId) return window.location.origin;
+  return `${window.location.origin}?ref=${userId}`;
 }

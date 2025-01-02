@@ -1,30 +1,59 @@
-import { Metadata } from "next";
+import { Metadata, ResolvingMetadata } from "next";
 import { App } from "../components/App";
+import { db } from "../lib/db";
+import { getUserDatasCached } from "../lib/farcaster";
+import { FRAME_METADATA } from "../lib/constants";
 
-const appUrl = process.env.APP_URL;
+type Props = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
 
-const frame = {
-  version: "next",
-  imageUrl: `${appUrl}/og.png`,
-  button: {
-    title: "launch irl",
-    action: {
-      type: "launch_frame",
-      name: "irl",
-      url: appUrl,
-      splashImageUrl: `${appUrl}/splash.png`,
-      splashBackgroundColor: "#f7f7f7",
+export async function generateMetadata(
+  props: Props,
+  parent: ResolvingMetadata
+): Promise<Metadata> {
+  const resolvedParent = await parent;
+  const originalMetadata = {
+    title: resolvedParent.title,
+    description: resolvedParent.description,
+    other: {
+      ...resolvedParent.other,
     },
-  },
-};
+  };
 
-export const metadata: Metadata = {
-  title: "irl",
-  description: "daily photos from the real world",
-  other: {
-    "fc:frame": JSON.stringify(frame),
-  },
-};
+  const searchParams = await props.searchParams;
+  const ref = searchParams["ref"];
+
+  if (ref) {
+    const user = await db
+      .selectFrom("users")
+      .selectAll()
+      .where("id", "=", ref)
+      .executeTakeFirstOrThrow();
+
+    const [farcasterUser] = await getUserDatasCached([user?.fid]);
+
+    if (!farcasterUser) {
+      throw new Error(`User ${user?.fid} not found (ref: ${ref})`);
+    }
+
+    const modifiedFrame = {
+      ...FRAME_METADATA,
+    };
+    modifiedFrame.imageUrl = `${process.env.APP_URL}/images/ref?fid=${user.fid}`;
+
+    return {
+      title: `@${farcasterUser.username} on irl`,
+      description: originalMetadata.description,
+      other: {
+        "fc:frame": JSON.stringify(modifiedFrame),
+      },
+    };
+  }
+
+  return originalMetadata;
+}
 
 export default function Page() {
   return <App />;

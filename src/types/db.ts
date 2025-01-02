@@ -33,9 +33,17 @@ export interface PostAlertRow {
   timezone: string;
 }
 
+export interface ReferralRow {
+  id: Generated<string>;
+  referrerId: string;
+  referredId: string;
+  createdAt: Generated<Date>;
+}
+
 export type Tables = {
   users: UserRow;
   userSession: UserSessionRow;
   posts: PostRow;
   postAlerts: PostAlertRow;
+  referrals: ReferralRow;
 };

@@ -61,6 +61,7 @@ export default function Page() {
     if (selectedTimezone) {
       updateTimezone.mutate(selectedTimezone);
     }
+    router.push("/");
   };
 
   return (
@@ -115,7 +116,7 @@ export default function Page() {
             variant="outline"
             onClick={() => router.push("/")}
           >
-            cancel
+            back
           </Button>
         </div>
       </div>

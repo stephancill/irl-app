@@ -1,10 +1,13 @@
 "use client";
 
 import { User } from "@/types/user";
-import sdk, { FrameContext } from "@farcaster/frame-sdk";
+import sdk, {
+  FrameContext,
+  FrameNotificationDetails,
+} from "@farcaster/frame-sdk";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Session } from "lucia";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import * as Sentry from "@sentry/nextjs";
 import {
@@ -19,14 +22,16 @@ async function signIn({
   message,
   signature,
   challengeId,
+  referrerId,
 }: {
   message: string;
   signature: string;
   challengeId: string;
+  referrerId?: string;
 }): Promise<Session> {
   const response = await fetch("/api/sign-in", {
     method: "POST",
-    body: JSON.stringify({ message, signature, challengeId }),
+    body: JSON.stringify({ message, signature, challengeId, referrerId }),
   });
 
   if (!response.ok) {
@@ -67,6 +72,19 @@ async function fetchChallenge(challengeId: string): Promise<string> {
   return challenge;
 }
 
+async function setNotificationDetails(
+  notificationDetails: FrameNotificationDetails
+): Promise<void> {
+  const response = await fetch("/api/user/notifications", {
+    method: "PATCH",
+    body: JSON.stringify(notificationDetails),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to set notification details");
+  }
+}
+
 interface SessionContextType {
   user: User | null | undefined;
   session: Session | null | undefined;
@@ -80,6 +98,7 @@ interface SessionContextType {
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [context, setContext] = useState<FrameContext>();
@@ -113,7 +132,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       return signIn({
         ...result,
         challengeId,
+        referrerId:
+          searchParams.get("ref") || searchParams.get("referrer") || undefined,
       });
+    },
+  });
+
+  const { mutate: setNotificationsMutation } = useMutation({
+    mutationFn: setNotificationDetails,
+    onSuccess: () => {
+      refetchUser();
     },
   });
 
@@ -155,6 +183,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       });
     }
   }, [user]);
+
+  useEffect(() => {
+    // Set notification details if somehow not set in db after webhook already called
+    if (!user?.notificationsEnabled && context?.client.notificationDetails) {
+      setNotificationsMutation(context.client.notificationDetails);
+    }
+  }, [user, context, setNotificationsMutation]);
 
   useEffect(() => {
     if (isLoading || !isSDKLoaded) return;

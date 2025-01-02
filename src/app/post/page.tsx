@@ -3,10 +3,9 @@
 import { useMutation } from "@tanstack/react-query";
 import { ArrowRight, Camera, RefreshCcw, RotateCcw, X } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect } from "react";
 import Webcam from "react-webcam";
-import { useToast } from "../../hooks/use-toast";
 import { AuthError } from "../../lib/errors";
 
 interface MediaDeviceInfo {
@@ -32,7 +31,7 @@ const imageDimensions = {
 };
 
 export default function Page() {
-  const { toast } = useToast();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const [devices, setDevices] = React.useState<MediaDeviceInfo[]>();
   const [isBackCamera, setIsBackCamera] = React.useState(false);
@@ -281,7 +280,7 @@ export default function Page() {
       return postId;
     },
     onSuccess: () => {
-      router.push("/");
+      router.push(searchParams.get("redirect") || "/");
     },
   });
 

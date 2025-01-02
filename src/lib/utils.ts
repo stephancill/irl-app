@@ -95,3 +95,17 @@ export function objectToMetadataString(obj: Record<string, any>): string {
     })
     .join("|");
 }
+
+export function generateWarpcastComposeUrl(
+  text: string,
+  embeds: string[] = []
+): string {
+  const url = new URL("https://warpcast.com/~/compose");
+  url.searchParams.append("text", text);
+
+  embeds.forEach((embed) => {
+    url.searchParams.append("embeds[]", embed);
+  });
+
+  return url.toString();
+}

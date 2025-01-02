@@ -1,4 +1,6 @@
+import { User } from "lucia";
 import { db } from "./db";
+import { latestPostAlert, postsForRendering } from "./queries";
 
 /**
  * Determines how many posts a user has remaining. Rules:
@@ -40,4 +42,38 @@ export async function postsAllowanceDetails(
         postsToday: latestAlertPosts.length,
       }
     : { postsRemaining: 0, postsToday: latestAlertPosts.length };
+}
+
+export async function processPostsVisibility(
+  posts: Awaited<ReturnType<typeof postsForRendering.execute>>,
+  user: User
+) {
+  // Replace image urls with placeholder if user hasn't posted today
+  const latestAlert = await latestPostAlert
+    .where("timezone", "=", user.timezone)
+    .executeTakeFirst();
+
+  if (!latestAlert) {
+    throw new Error("User has no latest alert");
+  }
+
+  const userPostsToday = await db
+    .selectFrom("posts")
+    .selectAll()
+    .where("userId", "=", user.id)
+    .where("postAlertId", "=", latestAlert.id)
+    .where("deletedAt", "is", null)
+    .execute();
+
+  const canViewPosts = userPostsToday.length > 0;
+
+  if (!canViewPosts) {
+    posts = posts.map((post) => ({
+      ...post,
+      frontImageUrl: null,
+      backImageUrl: null,
+    }));
+  }
+
+  return posts;
 }

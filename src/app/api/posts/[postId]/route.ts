@@ -1,5 +1,10 @@
-import { withAuth } from "../../../../lib/auth";
-import { db } from "../../../../lib/db";
+import { withAuth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { getMutuals, getUserDatasCached } from "@/lib/farcaster";
+import { getMutualsKey } from "@/lib/keys";
+import { processPostsVisibility } from "@/lib/posts";
+import { postsForRendering } from "@/lib/queries";
+import { withCache } from "@/lib/redis";
 
 export const GET = withAuth<{ params: Promise<{ postId: string }> }>(
   async (req, user, context) => {
@@ -9,20 +14,37 @@ export const GET = withAuth<{ params: Promise<{ postId: string }> }>(
       return Response.json({ error: "Missing postId" }, { status: 400 });
     }
 
-    const post = await db
-      .selectFrom("posts")
-      .selectAll()
-      .where("id", "=", postId)
-      .where("userId", "=", user.id)
+    const post = await postsForRendering
+      .where("posts.id", "=", postId)
       .executeTakeFirst();
 
     if (!post) {
       return Response.json({ error: "Post not found" }, { status: 404 });
     }
 
-    const isReady = post.frontImageUrl && post.backImageUrl;
+    if (post.userId !== user.id) {
+      const mutuals = await withCache(getMutualsKey(user.fid), () =>
+        getMutuals(user.fid)
+      );
 
-    return Response.json({ post, isReady });
+      const isMutual = mutuals.some((m) => m.fid === post.fid);
+      if (!isMutual) {
+        return Response.json(
+          {
+            error:
+              "You can only view posts from users you follow and who follow you back.",
+          },
+          { status: 403 }
+        );
+      }
+    }
+
+    const [postProcessed] = await processPostsVisibility([post], user);
+
+    const userDatas = await getUserDatasCached([postProcessed.fid]);
+
+    const isReady = post.frontImageUrl && post.backImageUrl;
+    return Response.json({ post: postProcessed, isReady, user: userDatas[0] });
   }
 );
 

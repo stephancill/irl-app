@@ -10,7 +10,7 @@ import { NextRequest } from "next/server";
 const selectUser = db.selectFrom("users").selectAll();
 
 export async function POST(req: NextRequest) {
-  const { message, signature, challengeId } = await req.json();
+  const { message, signature, challengeId, referrerId } = await req.json();
 
   if (!signature || !challengeId || !message) {
     console.error("Missing required fields", {
@@ -107,10 +107,24 @@ export async function POST(req: NextRequest) {
         throw new Error("Failed to create user");
       }
 
-      // Get the user with the alert after creation
-      dbUser = await selectUser
-        .where("users.id", "=", newUser.id)
-        .executeTakeFirst();
+      if (referrerId) {
+        await db
+          .insertInto("referrals")
+          .values({
+            referrerId,
+            referredId: newUser.id,
+          })
+          .execute();
+
+        // Get the user with the alert after creation
+        dbUser = await selectUser
+          .where("users.id", "=", newUser.id)
+          .executeTakeFirst();
+
+        if (!dbUser) {
+          throw new Error("Failed to create user");
+        }
+      }
     } catch (error) {
       console.error(error);
 
