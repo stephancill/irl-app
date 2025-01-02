@@ -85,6 +85,19 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const [context, setContext] = useState<FrameContext>();
 
   const {
+    data: user,
+    isLoading,
+    isError,
+    refetch: refetchUser,
+  } = useQuery({
+    queryKey: ["user"],
+    queryFn: fetchUser,
+    enabled: isSDKLoaded,
+    retry: false,
+    refetchInterval: 1000 * 60,
+  });
+
+  const {
     data: session,
     mutate: signInMutation,
     isPending: isSigningIn,
@@ -104,23 +117,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     },
   });
 
-  const {
-    data: user,
-    isLoading,
-    isError,
-    refetch: refetchUser,
-  } = useQuery({
-    queryKey: ["user"],
-    queryFn: fetchUser,
-    enabled: isSDKLoaded && !!session,
-    refetchInterval: 1000 * 60, // 1 minute
-  });
-
   useEffect(() => {
-    if (isSDKLoaded && context?.user?.fid) {
+    if (isSDKLoaded && context?.user?.fid && isError) {
       signInMutation();
     }
-  }, [isSDKLoaded, context?.user?.fid, signInMutation]);
+  }, [isSDKLoaded, context?.user?.fid, signInMutation, isError]);
 
   const logout = () => {
     router.push("/logout");
