@@ -20,6 +20,9 @@ export async function generateMetadata(
     other: {
       ...resolvedParent.other,
     },
+    openGraph: {
+      ...resolvedParent.openGraph,
+    },
   };
 
   const searchParams = await props.searchParams;

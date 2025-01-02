@@ -27,6 +27,13 @@ export async function generateMetadata(...args: any): Promise<Metadata> {
     other: {
       "fc:frame": JSON.stringify(frame),
     },
+    openGraph: {
+      images: [
+        {
+          url: `${appUrl}/og.png`,
+        },
+      ],
+    },
   };
 }
 
