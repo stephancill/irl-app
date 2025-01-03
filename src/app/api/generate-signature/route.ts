@@ -38,10 +38,11 @@ export const GET = withAuth(async (req, user) => {
         "latestAlertExpiry"
       ),
     ])
+    .where("users.id", "=", user.id)
     .executeTakeFirstOrThrow();
 
   if (!dbUser.postAlertId) {
-    throw new Error("No post alerts found for user");
+    throw new Error(`No post alerts found for user ${JSON.stringify(user)}`);
   }
 
   const allowanceDetails = await postsAllowanceDetails(
