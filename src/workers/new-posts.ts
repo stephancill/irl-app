@@ -54,7 +54,7 @@ export const newPostNotificationsWorker =
           url: user.notificationUrl!,
           fid: user.fid,
         })),
-        title: "someone just posted",
+        title: "new post",
         body: `@${userData.username} just posted`,
         targetUrl: process.env.APP_URL,
       });
