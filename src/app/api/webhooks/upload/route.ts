@@ -1,5 +1,7 @@
 import { db } from "@/lib/db";
 import { v2 as cloudinary } from "cloudinary";
+import { newPostNotificationsQueue } from "@/lib/queue";
+import { NEW_POST_NOTIFICATIONS_QUEUE_NAME } from "@/lib/constants";
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -44,7 +46,15 @@ export async function POST(request: Request) {
     });
   }
 
-  await query.execute();
+  const result = await query.returningAll().executeTakeFirst();
+
+  // If both images are uploaded, the post is complete and we can run side effects
+  if (result?.frontImageUrl && result?.backImageUrl) {
+    // Notifications
+    await newPostNotificationsQueue.add(NEW_POST_NOTIFICATIONS_QUEUE_NAME, {
+      postId: result.id,
+    });
+  }
 
   return Response.json({ success: true });
 }

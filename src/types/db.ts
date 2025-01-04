@@ -8,6 +8,7 @@ export type UserRow = {
   timezone: string | null;
   notificationUrl: string | null;
   notificationToken: string | null;
+  newPostNotifications: boolean | null;
 };
 
 export interface UserSessionRow {

@@ -7,18 +7,21 @@ import { sendFrameNotifications } from "../lib/notifications";
 export const alertsBulkWorker = new Worker<AlertsBulkJobData>(
   ALERTS_BULK_QUEUE_NAME,
   async (job) => {
-    const { notifications, url, alertId, chunkId } = job.data;
+    const { notifications, url, body, notificationId, targetUrl, title } =
+      job.data;
 
     const tokens = notifications.map(({ token }) => token);
 
-    await sendFrameNotifications({
+    const result = await sendFrameNotifications({
       tokens,
-      title: "it's time for your irl!",
-      body: "post within 5 minutes to be on time",
+      title,
+      body,
       url,
-      targetUrl: process.env.APP_URL,
-      notificationId: `irl-${alertId}-${chunkId}`,
+      targetUrl,
+      notificationId,
     });
+
+    return result;
   },
   { connection: redisQueue }
 );

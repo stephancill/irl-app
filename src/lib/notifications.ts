@@ -4,6 +4,8 @@ import {
 } from "@farcaster/frame-sdk";
 import { db } from "./db";
 import { FrameNotificationDetails } from "@farcaster/frame-node";
+import { alertsBulkQueue } from "./queue";
+import { AlertsBulkJobData } from "../types/jobs";
 
 type SendFrameNotificationResult =
   | {
@@ -146,4 +148,67 @@ export async function deleteUserNotificationDetails(
     })
     .where("fid", "=", fid)
     .execute();
+}
+
+export async function notifyUsers({
+  users,
+  title,
+  body,
+  targetUrl,
+  notificationId,
+}: {
+  users: { fid?: number; token: string; url: string }[];
+  title: string;
+  body: string;
+  targetUrl: string;
+  notificationId?: string;
+}) {
+  // Group users by notification url
+  const usersByUrl = users.reduce((acc, user) => {
+    const notificationUrl = user.url;
+    if (!acc[notificationUrl]) {
+      acc[notificationUrl] = [];
+    }
+    acc[notificationUrl].push(user);
+    return acc;
+  }, {} as Record<string, typeof users>);
+
+  // Then chunk each webhook group into groups of 100
+  const allChunks: Array<{
+    notificationUrl: string;
+    users: typeof users;
+    chunkId: number;
+  }> = [];
+  Object.entries(usersByUrl).forEach(([notificationUrl, webhookUsers]) => {
+    let chunkId = 0;
+
+    for (let i = 0; i < webhookUsers.length; i += 100) {
+      allChunks.push({
+        notificationUrl,
+        users: webhookUsers.slice(i, i + 100),
+        chunkId: chunkId++,
+      });
+    }
+  });
+
+  const jobs = await alertsBulkQueue.addBulk(
+    allChunks.map((chunk) => ({
+      name: `${title}-${new URL(chunk.notificationUrl).hostname}-${
+        chunk.chunkId
+      }`,
+      data: {
+        notifications: chunk.users.map((user) => ({
+          token: user.token!,
+          fid: user.fid,
+        })),
+        url: chunk.notificationUrl,
+        title,
+        body,
+        targetUrl,
+        notificationId,
+      } satisfies AlertsBulkJobData,
+    }))
+  );
+
+  return jobs;
 }

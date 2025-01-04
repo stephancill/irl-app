@@ -9,10 +9,16 @@ export type TimezoneJobData = {
 
 export type AlertsBulkJobData = {
   notifications: {
-    fid: number;
+    fid?: number;
     token: string;
   }[];
   url: string;
-  alertId: number;
-  chunkId: number;
+  title: string;
+  body: string;
+  targetUrl: string;
+  notificationId?: string;
+};
+
+export type NewPostNotificationsJobData = {
+  postId: string;
 };

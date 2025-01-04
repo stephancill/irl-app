@@ -24,6 +24,9 @@ export const ALERTS_BULK_QUEUE_NAME = "alerts-bulk";
 // Jobs that alert users
 export const ALERTS_QUEUE_NAME = "alerts";
 
+// Jobs that notify users of new posts
+export const NEW_POST_NOTIFICATIONS_QUEUE_NAME = "new-post-notifs";
+
 export const FRAME_METADATA = {
   version: "next",
   imageUrl: `${process.env.APP_URL}/og.png`,

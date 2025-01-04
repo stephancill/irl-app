@@ -2,7 +2,11 @@ import { createBullBoard } from "@bull-board/api";
 import { BullMQAdapter } from "@bull-board/api/bullMQAdapter.js";
 import { ExpressAdapter } from "@bull-board/express";
 import express from "express";
-import { alertsBulkQueue, alertsTimezonesQueue } from "./queue";
+import {
+  alertsBulkQueue,
+  alertsTimezonesQueue,
+  newPostNotificationsQueue,
+} from "./queue";
 
 // Add basic auth middleware
 const basicAuth = (
@@ -55,6 +59,7 @@ export function initExpressApp() {
     queues: [
       new BullMQAdapter(alertsTimezonesQueue),
       new BullMQAdapter(alertsBulkQueue),
+      new BullMQAdapter(newPostNotificationsQueue),
     ],
     serverAdapter,
   });
