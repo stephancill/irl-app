@@ -186,7 +186,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Set notification details if somehow not set in db after webhook already called
-    if (!user?.notificationsEnabled && context?.client.notificationDetails) {
+    if (
+      user &&
+      !user?.notificationsEnabled &&
+      context?.client.notificationDetails
+    ) {
       setNotificationsMutation(context.client.notificationDetails);
     }
   }, [user, context, setNotificationsMutation]);
