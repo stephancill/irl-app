@@ -11,7 +11,7 @@ import { useEffect } from "react";
 export default function PostDetail() {
   const params = useParams<{ postId: string }>();
   const router = useRouter();
-  const { user, refetchUser } = useSession();
+  const { user, refetchUser, authFetch } = useSession();
 
   const {
     data: postResponse,
@@ -20,7 +20,7 @@ export default function PostDetail() {
   } = useQuery({
     queryKey: ["post", params.postId],
     queryFn: async () => {
-      const res = await fetch(`/api/posts/${params.postId}`);
+      const res = await authFetch(`/api/posts/${params.postId}`);
       if (!res.ok) {
         const json = await res.json();
         throw new Error(json.error.toLowerCase());
@@ -63,7 +63,6 @@ export default function PostDetail() {
         {postResponse && (
           <PostView
             post={postResponse.post}
-            user={user!}
             postUser={postResponse.user}
             onDelete={() => router.push("/")}
           />

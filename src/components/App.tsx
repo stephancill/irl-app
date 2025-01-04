@@ -41,6 +41,7 @@ export function App() {
     user,
     refetchUser,
     isLoading: sessionLoading,
+    authFetch,
   } = useSession();
   const { ref, inView } = useInView();
   const { toast } = useToast();
@@ -63,7 +64,7 @@ export function App() {
     queryKey: ["feed"],
     queryFn: async ({ pageParam }) => {
       const url = pageParam ? `/api/feed?cursor=${pageParam}` : "/api/feed";
-      const res = await fetch(url);
+      const res = await authFetch(url);
       const data = await res.json();
       return data;
     },
@@ -197,7 +198,6 @@ export function App() {
                 <PostView
                   key={post.id}
                   post={post}
-                  user={user!}
                   postUser={page.users[post.fid]}
                   onDelete={() => {
                     refetch();

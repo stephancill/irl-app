@@ -10,8 +10,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { getRelativeTime } from "../lib/utils";
+import { useSession } from "../providers/SessionProvider";
 import { Post } from "../types/post";
-import { User } from "../types/user";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
@@ -27,17 +27,13 @@ interface PostViewProps {
     fid: number;
     timezone: string;
   };
-  user: User;
   postUser: UserDehydrated | null;
   onDelete?: () => void;
 }
 
-export function PostView({
-  post,
-  user,
-  postUser: pageUser,
-  onDelete,
-}: PostViewProps) {
+export function PostView({ post, postUser, onDelete }: PostViewProps) {
+  const { user, authFetch } = useSession();
+
   const [primaryImage, setPrimaryImage] = useState<"front" | "back">(
     post.primaryImage
   );
@@ -56,10 +52,10 @@ export function PostView({
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-2">
           <Avatar className="border">
-            <AvatarImage src={pageUser?.pfp_url} />
-            <AvatarFallback>{pageUser?.username}</AvatarFallback>
+            <AvatarImage src={postUser?.pfp_url} />
+            <AvatarFallback>{postUser?.username}</AvatarFallback>
           </Avatar>
-          <p className="text-sm font-bold text-lg">{pageUser?.username}</p>
+          <p className="text-sm font-bold text-lg">{postUser?.username}</p>
         </div>
         <div className="flex items-center gap-2">
           <p className="text-sm text-muted-foreground">
@@ -78,7 +74,7 @@ export function PostView({
               <DropdownMenuItem
                 onClick={() => {
                   sdk.actions.openUrl(
-                    `https://warpcast.com/${pageUser?.username}`
+                    `https://warpcast.com/${postUser?.username}`
                   );
                 }}
               >
@@ -90,7 +86,7 @@ export function PostView({
                   className="text-destructive focus:text-destructive"
                   onClick={async () => {
                     if (confirm("are you sure you want to delete this post?")) {
-                      const res = await fetch(`/api/posts/${post.id}`, {
+                      const res = await authFetch(`/api/posts/${post.id}`, {
                         method: "DELETE",
                       });
                       if (res.ok && onDelete) {

@@ -21,15 +21,17 @@ import { useState } from "react";
 import { Logo } from "../../components/Logo";
 import { Button } from "../../components/ui/button";
 import { useToast } from "../../hooks/use-toast";
+import { useSession } from "../../providers/SessionProvider";
 
 export default function Page() {
+  const { authFetch } = useSession();
   const { toast } = useToast();
   const router = useRouter();
   const [selectedTimezone, setSelectedTimezone] = useState<string>("");
 
   const updateTimezone = useMutation({
     mutationFn: async (timezone: string) => {
-      const response = await fetch("/api/user/timezone", {
+      const response = await authFetch("/api/user/timezone", {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

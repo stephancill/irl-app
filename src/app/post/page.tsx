@@ -31,6 +31,8 @@ const imageDimensions = {
 };
 
 export default function Page() {
+  // TODO: Disable on desktop
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const [devices, setDevices] = React.useState<MediaDeviceInfo[]>();

@@ -13,77 +13,11 @@ import * as Sentry from "@sentry/nextjs";
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useState,
 } from "react";
-
-async function signIn({
-  message,
-  signature,
-  challengeId,
-  referrerId,
-}: {
-  message: string;
-  signature: string;
-  challengeId: string;
-  referrerId?: string;
-}): Promise<Session> {
-  const response = await fetch("/api/sign-in", {
-    method: "POST",
-    body: JSON.stringify({ message, signature, challengeId, referrerId }),
-  });
-
-  if (!response.ok) {
-    throw new Error(`Failed to sign in ${response.status}`);
-  }
-
-  const { session } = await response.json();
-
-  if (!session) {
-    throw new Error("Could not create session");
-  }
-
-  return session;
-}
-
-export async function fetchUser(): Promise<User> {
-  const response = await fetch("/api/user");
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch user ${response.status}`);
-  }
-
-  return response.json();
-}
-
-async function fetchChallenge(challengeId: string): Promise<string> {
-  const response = await fetch("/api/challenge", {
-    method: "POST",
-    body: JSON.stringify({ challengeId }),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to fetch challenge");
-  }
-
-  const { challenge } = await response.json();
-
-  return challenge;
-}
-
-async function setNotificationDetails(
-  notificationDetails: FrameNotificationDetails
-): Promise<void> {
-  const response = await fetch("/api/user/notifications", {
-    method: "PATCH",
-    body: JSON.stringify(notificationDetails),
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to set notification details");
-  }
-}
 
 interface SessionContextType {
   user: User | null | undefined;
@@ -93,6 +27,7 @@ interface SessionContextType {
   isError: boolean;
   refetchUser: () => void;
   logout: () => void;
+  authFetch: typeof fetch;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -102,19 +37,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
   const [context, setContext] = useState<FrameContext>();
-
-  const {
-    data: user,
-    isLoading,
-    isError,
-    refetch: refetchUser,
-  } = useQuery({
-    queryKey: ["user"],
-    queryFn: fetchUser,
-    enabled: isSDKLoaded,
-    retry: false,
-    refetchInterval: 1000 * 60,
-  });
 
   const {
     data: session,
@@ -136,6 +58,35 @@ export function SessionProvider({ children }: { children: ReactNode }) {
           searchParams.get("ref") || searchParams.get("referrer") || undefined,
       });
     },
+    onSuccess: () => {
+      refetchUser();
+    },
+  });
+
+  const authFetch = useCallback(
+    (input: RequestInfo | URL, init?: RequestInit) => {
+      return fetch(input, {
+        ...init,
+        headers: session?.id
+          ? {
+              Authorization: `Bearer ${session?.id}`,
+            }
+          : undefined,
+      });
+    },
+    [session?.id]
+  );
+
+  const {
+    data: user,
+    isLoading,
+    isError,
+    refetch: refetchUser,
+  } = useQuery({
+    queryKey: ["user"],
+    queryFn: () => fetchUser(authFetch),
+    enabled: isSDKLoaded,
+    refetchInterval: 1000 * 60,
   });
 
   const { mutate: setNotificationsMutation } = useMutation({
@@ -216,11 +167,79 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         isError,
         refetchUser,
         logout,
+        authFetch,
       }}
     >
       {children}
     </SessionContext.Provider>
   );
+}
+
+async function fetchChallenge(challengeId: string): Promise<string> {
+  const response = await fetch("/api/challenge", {
+    method: "POST",
+    body: JSON.stringify({ challengeId }),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch challenge");
+  }
+
+  const { challenge } = await response.json();
+
+  return challenge;
+}
+
+async function signIn({
+  message,
+  signature,
+  challengeId,
+  referrerId,
+}: {
+  message: string;
+  signature: string;
+  challengeId: string;
+  referrerId?: string;
+}): Promise<Session> {
+  const response = await fetch("/api/sign-in", {
+    method: "POST",
+    body: JSON.stringify({ message, signature, challengeId, referrerId }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to sign in ${response.status}`);
+  }
+
+  const { session } = await response.json();
+
+  if (!session) {
+    throw new Error("Could not create session");
+  }
+
+  return session;
+}
+
+export async function fetchUser(fetchFn: typeof fetch = fetch): Promise<User> {
+  const response = await fetchFn("/api/user");
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user ${response.status}`);
+  }
+
+  return response.json();
+}
+
+async function setNotificationDetails(
+  notificationDetails: FrameNotificationDetails
+): Promise<void> {
+  const response = await fetch("/api/user/notifications", {
+    method: "PATCH",
+    body: JSON.stringify(notificationDetails),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to set notification details");
+  }
 }
 
 export function useSession() {
