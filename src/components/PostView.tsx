@@ -38,7 +38,9 @@ export function PostView({
   postUser: pageUser,
   onDelete,
 }: PostViewProps) {
-  const [primaryImage, setPrimaryImage] = useState<"front" | "back">("front");
+  const [primaryImage, setPrimaryImage] = useState<"front" | "back">(
+    post.primaryImage
+  );
   const [isMainLoading, setIsMainLoading] = useState(true);
   const [isThumbnailLoading, setIsThumbnailLoading] = useState(true);
 
