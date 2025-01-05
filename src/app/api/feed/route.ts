@@ -34,8 +34,6 @@ export const GET = withAuth(async (req, user) => {
   let query = postsForRendering
     .where("posts.createdAt", ">=", new Date(Date.now() - 24 * 60 * 60 * 1000))
     .where("posts.deletedAt", "is", null)
-    .where("posts.frontImageUrl", "is not", null)
-    .where("posts.backImageUrl", "is not", null)
     .where("users.fid", "in", feedFids)
     .orderBy("posts.createdAt", "desc")
     .limit(limit + 1);

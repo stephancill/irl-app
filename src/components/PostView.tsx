@@ -1,6 +1,7 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import sdk from "@farcaster/frame-sdk";
 import { type UserDehydrated } from "@neynar/nodejs-sdk/build/api";
+import { useQuery } from "@tanstack/react-query";
 import {
   EyeOff,
   MoreVertical,
@@ -8,7 +9,7 @@ import {
   User as UserIcon,
   Zap,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getRelativeTime } from "../lib/utils";
 import { useSession } from "../providers/SessionProvider";
 import { Post } from "../types/post";
@@ -31,8 +32,27 @@ interface PostViewProps {
   onDelete?: () => void;
 }
 
-export function PostView({ post, postUser, onDelete }: PostViewProps) {
+export function PostView({
+  post: initialPost,
+  postUser,
+  onDelete,
+}: PostViewProps) {
   const { user, authFetch } = useSession();
+
+  const [shouldRefetch, setShouldRefetch] = useState(false);
+
+  const { data: post } = useQuery({
+    queryKey: ["post", initialPost.id],
+    queryFn: async () => {
+      const res = await authFetch(`/api/posts/${initialPost.id}`);
+      if (!res.ok) throw new Error("Failed to fetch post");
+      const { post } = await res.json();
+      return post;
+    },
+    enabled: shouldRefetch,
+    initialData: initialPost,
+    refetchInterval: shouldRefetch ? 1000 : undefined,
+  });
 
   const [primaryImage, setPrimaryImage] = useState<"front" | "back">(
     post.primaryImage
@@ -46,6 +66,23 @@ export function PostView({ post, postUser, onDelete }: PostViewProps) {
     primaryImage === "front" ? post.backImageUrl : post.frontImageUrl;
 
   const placeholderClass = "w-full h-full bg-gray-200 rounded-md";
+
+  const isPostReady = useMemo(() => {
+    return (
+      post.frontImageUrl &&
+      post.backImageUrl &&
+      user !== undefined &&
+      user?.postsToday !== 0
+    );
+  }, [post, user]);
+
+  useEffect(() => {
+    if (post.frontImageUrl && post.backImageUrl) {
+      setShouldRefetch(false);
+    } else {
+      setShouldRefetch(true);
+    }
+  }, [post]);
 
   return (
     <div className="flex flex-col gap-2">
@@ -109,14 +146,14 @@ export function PostView({ post, postUser, onDelete }: PostViewProps) {
         {isMainLoading && mainImage && (
           <Skeleton className="absolute inset-0 w-full h-full rounded-md" />
         )}
-        {mainImage ? (
+        {isPostReady ? (
           <img
             src={mainImage}
             alt="Post"
             className="w-full h-full object-cover rounded-md"
             onLoad={() => setIsMainLoading(false)}
           />
-        ) : (
+        ) : user?.postsToday === 0 ? (
           <div
             className={`${placeholderClass} flex flex-col items-center justify-center gap-2`}
           >
@@ -125,9 +162,15 @@ export function PostView({ post, postUser, onDelete }: PostViewProps) {
               create a post to view other posts
             </span>
           </div>
+        ) : (
+          <div
+            className={`${placeholderClass} flex flex-col items-center justify-center gap-2`}
+          >
+            <span className="text-gray-500 text-center">processing...</span>
+          </div>
         )}
 
-        {thumbnailImage && (
+        {isPostReady && (
           <button
             onClick={() =>
               setPrimaryImage(primaryImage === "front" ? "back" : "front")

@@ -135,6 +135,7 @@ export function App() {
             size="sm"
             onClick={() => setShowShareModal(true)}
             className="text-muted-foreground hover:text-foreground"
+            title="invite"
           >
             <UserPlus className="h-4 w-4" />
             invite
@@ -144,6 +145,7 @@ export function App() {
             size="sm"
             onClick={() => setShowNotificationModal(true)}
             className="text-muted-foreground hover:text-foreground"
+            title="notifications"
           >
             <Bell className="h-4 w-4" />
           </Button>
@@ -152,6 +154,7 @@ export function App() {
             size="sm"
             onClick={() => refetch()}
             className="text-muted-foreground hover:text-foreground"
+            title="refresh feed"
           >
             <RefreshCw
               className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}

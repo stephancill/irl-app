@@ -215,7 +215,10 @@ export default function Page() {
 
       // Get the signature from the server
       const signResponse = await fetch(
-        `/api/generate-signature?primaryType=${activeCamera}`
+        `/api/generate-signature?primaryType=${activeCamera}`,
+        {
+          method: "POST",
+        }
       );
 
       if (!signResponse.ok) {
@@ -260,23 +263,6 @@ export default function Page() {
 
       // Poll for post completion with 5-second timeout
       const postId = responseData.postId;
-      const startTime = Date.now();
-      const TIMEOUT = 5000; // 5 seconds
-
-      while (Date.now() - startTime < TIMEOUT) {
-        const pollResponse = await fetch(`/api/posts/${postId}`);
-        if (!pollResponse.ok) {
-          throw new Error("Failed to check post status");
-        }
-        const postData = await pollResponse.json();
-
-        if (postData.isReady) {
-          return postId;
-        }
-
-        // Wait 1 second before next poll
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
 
       // If we reach here, we've timed out but we'll still return the postId
       return postId;

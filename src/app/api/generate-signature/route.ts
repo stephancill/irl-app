@@ -13,7 +13,7 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-export const GET = withAuth(async (req, user) => {
+export const POST = withAuth(async (req, user) => {
   const primaryType = req.nextUrl.searchParams.get("primaryType");
 
   if (!primaryType || !["front", "back"].includes(primaryType)) {
