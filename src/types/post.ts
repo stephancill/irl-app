@@ -5,4 +5,8 @@ export type Post = {
   backImageUrl: string | null;
   primaryImage: "back" | "front";
   postOnTime: boolean;
+  userId: string;
+  fid: number;
+  timezone: string;
+  userStreak: number;
 };

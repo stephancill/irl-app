@@ -8,6 +8,7 @@ import {
   Trash,
   User as UserIcon,
   Zap,
+  Flame,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { getRelativeTime } from "../lib/utils";
@@ -21,13 +22,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { twMerge } from "tailwind-merge";
 
 interface PostViewProps {
-  post: Post & {
-    userId: string;
-    fid: number;
-    timezone: string;
-  };
+  post: Post;
   postUser: UserDehydrated | null;
   onDelete?: () => void;
 }
@@ -47,7 +45,7 @@ export function PostView({
       const res = await authFetch(`/api/posts/${initialPost.id}`);
       if (!res.ok) throw new Error("Failed to fetch post");
       const { post } = await res.json();
-      return post;
+      return post as Post;
     },
     enabled: shouldRefetch,
     initialData: initialPost,
@@ -85,14 +83,24 @@ export function PostView({
   }, [post]);
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-2">
-          <Avatar className="border">
+          <Avatar className={twMerge("border")}>
             <AvatarImage src={postUser?.pfp_url} />
             <AvatarFallback>{postUser?.username}</AvatarFallback>
           </Avatar>
-          <p className="text-sm font-bold text-lg">{postUser?.username}</p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-bold text-lg">{postUser?.username}</p>
+            {post.userStreak > 0 && (
+              <div className="bg-yellow-400 rounded-full p-0.5 flex items-center justify-center">
+                <Flame className="w-3 h-3 text-white fill-current" />
+                <span className="text-[10px] font-bold text-white px-0.5">
+                  {post.userStreak}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <p className="text-sm text-muted-foreground">
@@ -103,7 +111,7 @@ export function PostView({
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="w-1">
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -146,7 +154,7 @@ export function PostView({
         {isMainLoading && mainImage && (
           <Skeleton className="absolute inset-0 w-full h-full rounded-md" />
         )}
-        {isPostReady ? (
+        {isPostReady && mainImage ? (
           <img
             src={mainImage}
             alt="Post"
@@ -155,7 +163,10 @@ export function PostView({
           />
         ) : user?.postsToday === 0 ? (
           <div
-            className={`${placeholderClass} flex flex-col items-center justify-center gap-2`}
+            className={twMerge(
+              placeholderClass,
+              "flex flex-col items-center justify-center gap-2"
+            )}
           >
             <EyeOff className="w-6 h-6 text-gray-500" />
             <span className="text-gray-500 text-center">
@@ -164,13 +175,16 @@ export function PostView({
           </div>
         ) : (
           <div
-            className={`${placeholderClass} flex flex-col items-center justify-center gap-2`}
+            className={twMerge(
+              placeholderClass,
+              "flex flex-col items-center justify-center gap-2"
+            )}
           >
             <span className="text-gray-500 text-center">processing...</span>
           </div>
         )}
 
-        {isPostReady && (
+        {isPostReady && thumbnailImage && (
           <button
             onClick={() =>
               setPrimaryImage(primaryImage === "front" ? "back" : "front")

@@ -138,7 +138,6 @@ export function App() {
             title="invite"
           >
             <UserPlus className="h-4 w-4" />
-            invite
           </Button>
           <Button
             variant="ghost"

@@ -23,12 +23,6 @@ export const GET = withAuth(async (req, user) => {
     ...mutuals.filter((m) => allUserFidsSet.has(m.fid)).map((m) => m.fid),
     user.fid,
   ];
-  const userDatas = await getUserDatasCached(feedFids);
-
-  const farcasterUsersByFid = userDatas.reduce((acc, m) => {
-    acc[m.fid] = m;
-    return acc;
-  }, {} as Record<number, (typeof userDatas)[number]>);
 
   // TODO: Only show posts from users that the user follows
   let query = postsForRendering
@@ -71,10 +65,12 @@ export const GET = withAuth(async (req, user) => {
     }));
   }
 
-  const users = posts.reduce((acc, post) => {
-    acc[post.fid] = farcasterUsersByFid[post.fid];
+  const presentFids = Array.from(new Set(posts.map((post) => post.fid)));
+  const userDatas = await getUserDatasCached(presentFids);
+  const users = userDatas.reduce((acc, m) => {
+    acc[m.fid] = m;
     return acc;
-  }, {} as typeof farcasterUsersByFid);
+  }, {} as Record<number, (typeof userDatas)[number]>);
 
   // Check if there are more posts
   const hasMore = posts.length > limit;
