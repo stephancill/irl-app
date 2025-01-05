@@ -93,9 +93,9 @@ export function PostView({
           <div className="flex items-center gap-2">
             <p className="text-sm font-bold text-lg">{postUser?.username}</p>
             {post.userStreak > 0 && (
-              <div className="bg-yellow-400 rounded-full p-0.5 flex items-center justify-center">
+              <div className="bg-yellow-400 rounded-full py-0.5 px-1 flex items-center justify-center">
                 <Flame className="w-3 h-3 text-white fill-current" />
-                <span className="text-[10px] font-bold text-white px-0.5">
+                <span className="text-[10px] font-bold text-white ml-0.5 pr-0.5">
                   {post.userStreak}
                 </span>
               </div>

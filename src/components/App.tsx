@@ -4,7 +4,14 @@ import { Header } from "@/components/Header";
 import sdk from "@farcaster/frame-sdk";
 import { type UserDehydrated } from "@neynar/nodejs-sdk/build/api";
 import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
-import { RefreshCw, TreeDeciduous, UserPlus, Bell } from "lucide-react";
+import {
+  Bell,
+  Info,
+  RefreshCw,
+  Settings,
+  TreeDeciduous,
+  UserPlus,
+} from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
@@ -22,7 +29,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
+import {
+  Menubar,
+  MenubarContent,
+  MenubarItem,
+  MenubarMenu,
+  MenubarTrigger,
+} from "./ui/menubar";
 import { Switch } from "./ui/switch";
+import { twMerge } from "tailwind-merge";
 
 type PostResponse = Post & {
   userId: string;
@@ -51,6 +66,7 @@ export function App() {
   const [tapCount, setTapCount] = useState(0);
   const [debugMode, setDebugMode] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
+  const [showRulesModal, setShowRulesModal] = useState(false);
 
   // TODO: Live refresh
   const {
@@ -129,25 +145,35 @@ export function App() {
   return (
     <div className="flex flex-col h-screen">
       <Header onClick={() => setTapCount((count) => count + 1)}>
-        <div className="flex gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowShareModal(true)}
-            className="text-muted-foreground hover:text-foreground"
-            title="invite"
-          >
-            <UserPlus className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setShowNotificationModal(true)}
-            className="text-muted-foreground hover:text-foreground"
-            title="notifications"
-          >
-            <Bell className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center gap-1">
+          <Menubar className="border-none p-0 shadow-none">
+            <MenubarMenu>
+              <MenubarTrigger asChild className="cursor-pointer">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground hover:text-foreground"
+                  title="settings"
+                >
+                  <Settings className="h-4 w-4" />
+                </Button>
+              </MenubarTrigger>
+              <MenubarContent>
+                <MenubarItem onClick={() => setShowRulesModal(true)}>
+                  <Info className="h-4 w-4 mr-2" />
+                  how it works
+                </MenubarItem>
+                <MenubarItem onClick={() => setShowShareModal(true)}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  invite
+                </MenubarItem>
+                <MenubarItem onClick={() => setShowNotificationModal(true)}>
+                  <Bell className="h-4 w-4 mr-2" />
+                  notifications
+                </MenubarItem>
+              </MenubarContent>
+            </MenubarMenu>
+          </Menubar>
           <Button
             variant="ghost"
             size="sm"
@@ -156,7 +182,7 @@ export function App() {
             title="refresh feed"
           >
             <RefreshCw
-              className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+              className={twMerge("h-4 w-4", isFetching && "animate-spin")}
             />
           </Button>
         </div>
@@ -222,6 +248,27 @@ export function App() {
               />
             </div>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showRulesModal} onOpenChange={setShowRulesModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>how it works</DialogTitle>
+          </DialogHeader>
+          <ul className="list-disc pl-4 space-y-2">
+            <li>you can only see posts from mutuals from the past 24 hours</li>
+            <li>
+              you'll receive a notification at a random time every day to post
+              (based on your location, there are 4 timezones)
+            </li>
+            <li>
+              if you post within 5 minutes of the notification you can post 2
+              more times that day
+            </li>
+            <li>you can only view other people's posts after you've posted</li>
+            <li>you can always post late</li>
+          </ul>
         </DialogContent>
       </Dialog>
 
