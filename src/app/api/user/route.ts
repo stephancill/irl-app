@@ -25,6 +25,7 @@ export const GET = withAuth(async (req, luciaUser) => {
         "latestAlertExpiry"
       ),
       "latestAlert.id as latestAlertId",
+      "users.newPostNotifications",
     ])
     .where("users.id", "=", luciaUser.id)
     .executeTakeFirst();
@@ -49,6 +50,7 @@ export const GET = withAuth(async (req, luciaUser) => {
     postsRemaining: allowanceDetails.postsRemaining,
     postsToday: allowanceDetails.postsToday,
     notificationsEnabled: dbUser.notificationUrl !== null,
+    postNotificationsEnabled: dbUser.newPostNotifications,
   };
 
   return Response.json(user);

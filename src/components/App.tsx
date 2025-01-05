@@ -3,8 +3,8 @@
 import { Header } from "@/components/Header";
 import sdk from "@farcaster/frame-sdk";
 import { type UserDehydrated } from "@neynar/nodejs-sdk/build/api";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { RefreshCw, TreeDeciduous, UserPlus } from "lucide-react";
+import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
+import { RefreshCw, TreeDeciduous, UserPlus, Bell } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useInView } from "react-intersection-observer";
@@ -22,6 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
+import { Switch } from "./ui/switch";
 
 type PostResponse = Post & {
   userId: string;
@@ -49,6 +50,7 @@ export function App() {
   const [showShareModal, setShowShareModal] = useState(false);
   const [tapCount, setTapCount] = useState(0);
   const [debugMode, setDebugMode] = useState(false);
+  const [showNotificationModal, setShowNotificationModal] = useState(false);
 
   // TODO: Live refresh
   const {
@@ -102,6 +104,18 @@ export function App() {
     }
   }, [tapCount]);
 
+  const { mutate: updateNotifications, isPending: isUpdatingNotifications } =
+    useMutation({
+      mutationFn: (enabled: boolean) =>
+        authFetch("/api/user/notifications", {
+          method: "PATCH",
+          body: JSON.stringify({ postNotificationsEnabled: enabled }),
+        }),
+      onSuccess: () => {
+        refetchUser();
+      },
+    });
+
   if (isLoading || sessionLoading)
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
@@ -115,7 +129,7 @@ export function App() {
   return (
     <div className="flex flex-col h-screen">
       <Header onClick={() => setTapCount((count) => count + 1)}>
-        <div className="flex gap-2">
+        <div className="flex gap-1">
           <Button
             variant="ghost"
             size="sm"
@@ -124,6 +138,14 @@ export function App() {
           >
             <UserPlus className="h-4 w-4" />
             invite
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowNotificationModal(true)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <Bell className="h-4 w-4" />
           </Button>
           <Button
             variant="ghost"
@@ -170,6 +192,33 @@ export function App() {
             >
               draft
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showNotificationModal}
+        onOpenChange={setShowNotificationModal}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>notification settings</DialogTitle>
+            <DialogDescription>
+              customize which notifications you'd like to receive
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label htmlFor="newPosts">new posts</label>
+              <Switch
+                id="newPosts"
+                checked={user?.postNotificationsEnabled}
+                onCheckedChange={(checked) => {
+                  updateNotifications(checked);
+                }}
+                disabled={isUpdatingNotifications}
+              />
+            </div>
           </div>
         </DialogContent>
       </Dialog>

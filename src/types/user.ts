@@ -8,4 +8,5 @@ export type User = {
   postsRemaining: number;
   postsToday: number;
   notificationsEnabled: boolean;
+  postNotificationsEnabled: boolean;
 };
