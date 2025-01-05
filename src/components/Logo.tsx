@@ -3,7 +3,7 @@ export function Logo() {
     <h1
       className="text-xl font-bold"
       style={{
-        fontFamily: "monospace",
+        fontFamily: "'Source Serif 4', monospace",
       }}
     >
       irl
