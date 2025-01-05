@@ -92,7 +92,7 @@ export function PostView({
           </Avatar>
           <div className="flex items-center gap-2">
             <p className="text-sm font-bold text-lg">{postUser?.username}</p>
-            {post.userStreak > 0 && (
+            {post.userStreak > 1 && (
               <div className="bg-yellow-400 rounded-full py-0.5 px-1 flex items-center justify-center">
                 <Flame className="w-3 h-3 text-white fill-current" />
                 <span className="text-[10px] font-bold text-white ml-0.5 pr-0.5">
