@@ -144,7 +144,14 @@ export function PostView({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between px-2">
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2"
+          onClick={() => {
+            sdk.actions.viewProfile({
+              fid: post.fid,
+            });
+          }}
+        >
           <Avatar className={twMerge("border")}>
             <AvatarImage src={users[post.fid]?.pfp_url} />
             <AvatarFallback>{users[post.fid]?.username}</AvatarFallback>
@@ -170,43 +177,37 @@ export function PostView({
           {post.postOnTime && (
             <Zap fill="yellow" className="h-4 w-4 text-yellow-400" />
           )}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="w-1">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem
-                onClick={() => {
-                  sdk.actions.openUrl(
-                    `https://warpcast.com/${users[post.fid]?.username}`
-                  );
-                }}
-              >
-                <UserIcon className="h-4 w-4 mr-2" />
-                View on Warpcast
-              </DropdownMenuItem>
-              {post.userId === user?.id && (
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={async () => {
-                    if (confirm("are you sure you want to delete this post?")) {
-                      const res = await authFetch(`/api/posts/${post.id}`, {
-                        method: "DELETE",
-                      });
-                      if (res.ok && onDelete) {
-                        onDelete();
+          {post.userId === user?.id && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="w-1">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                {post.userId === user?.id && (
+                  <DropdownMenuItem
+                    className="text-destructive focus:text-destructive"
+                    onClick={async () => {
+                      if (
+                        confirm("are you sure you want to delete this post?")
+                      ) {
+                        const res = await authFetch(`/api/posts/${post.id}`, {
+                          method: "DELETE",
+                        });
+                        if (res.ok && onDelete) {
+                          onDelete();
+                        }
                       }
-                    }
-                  }}
-                >
-                  <Trash className="h-4 w-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+                    }}
+                  >
+                    <Trash className="h-4 w-4 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
@@ -302,7 +303,14 @@ export function PostView({
                       )}
                       id={`comment-${comment.id}`}
                     >
-                      <Avatar className="w-6 h-6">
+                      <Avatar
+                        className="w-6 h-6"
+                        onClick={() => {
+                          sdk.actions.viewProfile({
+                            fid: commentUser?.fid!,
+                          });
+                        }}
+                      >
                         <AvatarImage src={commentUser?.pfp_url} />
                         <AvatarFallback>
                           {commentUser?.username?.[0]}
@@ -311,7 +319,14 @@ export function PostView({
                       <div className="flex flex-col flex-1">
                         <div className="flex gap-2 items-center justify-between">
                           <div className="flex gap-2 items-center">
-                            <span className="text-sm font-medium">
+                            <span
+                              className="text-sm font-medium"
+                              onClick={() => {
+                                sdk.actions.viewProfile({
+                                  fid: commentUser?.fid!,
+                                });
+                              }}
+                            >
                               {commentUser?.username}
                             </span>
                             <span className="text-xs text-muted-foreground">
