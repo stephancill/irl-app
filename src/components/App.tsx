@@ -11,6 +11,7 @@ import {
   Settings,
   TreeDeciduous,
   UserPlus,
+  Loader2,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -313,7 +314,7 @@ export function App() {
 
         {/* Loading indicator */}
         <div ref={ref} className="flex justify-center p-4">
-          {isFetchingNextPage && <div>Loading more...</div>}
+          {isFetchingNextPage && <Loader2 className="h-6 w-6 animate-spin" />}
         </div>
       </div>
 
