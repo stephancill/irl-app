@@ -88,7 +88,7 @@ export function App() {
     },
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     initialPageParam: null,
-    enabled: !!user,
+    enabled: !!user && !!user.timezone,
   });
 
   // Load more when bottom is visible
