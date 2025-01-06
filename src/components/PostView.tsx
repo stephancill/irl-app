@@ -85,7 +85,14 @@ export function PostView({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between px-2">
-        <div className="flex items-center gap-2">
+        <div
+          className="flex items-center gap-2"
+          onClick={() => {
+            sdk.actions.viewProfile({
+              fid: postUser?.fid!,
+            });
+          }}
+        >
           <Avatar className={twMerge("border")}>
             <AvatarImage src={postUser?.pfp_url} />
             <AvatarFallback>{postUser?.username}</AvatarFallback>
@@ -116,16 +123,6 @@ export function PostView({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem
-                onClick={() => {
-                  sdk.actions.openUrl(
-                    `https://warpcast.com/${postUser?.username}`
-                  );
-                }}
-              >
-                <UserIcon className="h-4 w-4 mr-2" />
-                View on Warpcast
-              </DropdownMenuItem>
               {post.userId === user?.id && (
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
