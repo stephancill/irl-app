@@ -5,6 +5,7 @@ import express from "express";
 import {
   alertsBulkQueue,
   alertsTimezonesQueue,
+  newCommentNotificationsQueue,
   newPostNotificationsQueue,
 } from "./queue";
 
@@ -60,6 +61,7 @@ export function initExpressApp() {
       new BullMQAdapter(alertsTimezonesQueue),
       new BullMQAdapter(alertsBulkQueue),
       new BullMQAdapter(newPostNotificationsQueue),
+      new BullMQAdapter(newCommentNotificationsQueue),
     ],
     serverAdapter,
   });

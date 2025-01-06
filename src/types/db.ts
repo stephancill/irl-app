@@ -41,10 +41,20 @@ export interface ReferralRow {
   createdAt: Generated<Date>;
 }
 
+export interface CommentRow {
+  id: Generated<string>;
+  postId: string;
+  userId: string;
+  content: string;
+  createdAt: Generated<Date>;
+  deletedAt: Date | null;
+}
+
 export type Tables = {
   users: UserRow;
   userSession: UserSessionRow;
   posts: PostRow;
   postAlerts: PostAlertRow;
   referrals: ReferralRow;
+  comments: CommentRow;
 };

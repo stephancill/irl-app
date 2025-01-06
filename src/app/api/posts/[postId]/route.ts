@@ -41,10 +41,18 @@ export const GET = withAuth<{ params: Promise<{ postId: string }> }>(
 
     const [postProcessed] = await processPostsVisibility([post], user);
 
-    const userDatas = await getUserDatasCached([postProcessed.fid]);
+    const userDatas = await getUserDatasCached([
+      postProcessed.fid,
+      ...post.comments.map((c) => c.userFid),
+    ]);
+
+    const users = userDatas.reduce((acc, m) => {
+      acc[m.fid] = m;
+      return acc;
+    }, {} as Record<number, (typeof userDatas)[number]>);
 
     const isReady = post.frontImageUrl && post.backImageUrl;
-    return Response.json({ post: postProcessed, isReady, user: userDatas[0] });
+    return Response.json({ post: postProcessed, isReady, users });
   }
 );
 

@@ -3,10 +3,14 @@ import {
   ALERTS_BULK_QUEUE_NAME,
   ALERTS_QUEUE_NAME,
   ALERTS_TIMEZONES_QUEUE_NAME,
+  NEW_COMMENT_NOTIFICATIONS_QUEUE_NAME,
   NEW_POST_NOTIFICATIONS_QUEUE_NAME,
 } from "./constants";
 import { redisQueue } from "./redis";
-import { NewPostNotificationsJobData } from "../types/jobs";
+import {
+  NewCommentNotificationsJobData,
+  NewPostNotificationsJobData,
+} from "../types/jobs";
 
 export const alertsBulkQueue = new Queue(ALERTS_BULK_QUEUE_NAME, {
   connection: redisQueue,
@@ -26,3 +30,11 @@ export const newPostNotificationsQueue = new Queue<NewPostNotificationsJobData>(
     connection: redisQueue,
   }
 );
+
+export const newCommentNotificationsQueue =
+  new Queue<NewCommentNotificationsJobData>(
+    NEW_COMMENT_NOTIFICATIONS_QUEUE_NAME,
+    {
+      connection: redisQueue,
+    }
+  );

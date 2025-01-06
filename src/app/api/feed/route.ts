@@ -2,6 +2,7 @@ import { withAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { getMutuals, getUserDatasCached } from "@/lib/farcaster";
 import { getMutualsKey } from "@/lib/keys";
+import { processPostsVisibility } from "@/lib/posts";
 import { latestPostAlert, postsForRendering } from "@/lib/queries";
 import { withCache } from "@/lib/redis";
 
@@ -51,25 +52,14 @@ export const GET = withAuth(async (req, user) => {
     throw new Error("User has no latest alert");
   }
 
-  const userPostsToday = await db
-    .selectFrom("posts")
-    .selectAll()
-    .where("userId", "=", user.id)
-    .where("postAlertId", "=", latestAlert.id)
-    .where("deletedAt", "is", null)
-    .execute();
+  posts = await processPostsVisibility(posts, user);
 
-  const canViewPosts = userPostsToday.length > 0;
-
-  if (!canViewPosts) {
-    posts = posts.map((post) => ({
-      ...post,
-      frontImageUrl: null,
-      backImageUrl: null,
-    }));
-  }
-
-  const presentFids = Array.from(new Set(posts.map((post) => post.fid)));
+  const commentFids = posts.flatMap((post) =>
+    post.comments.map((c) => c.userFid)
+  );
+  const presentFids = Array.from(
+    new Set([...commentFids, ...posts.map((post) => post.fid)])
+  );
   const userDatas = await getUserDatasCached(presentFids);
   const users = userDatas.reduce((acc, m) => {
     acc[m.fid] = m;

@@ -22,3 +22,8 @@ export type AlertsBulkJobData = {
 export type NewPostNotificationsJobData = {
   postId: string;
 };
+
+export type NewCommentNotificationsJobData = {
+  postId: string;
+  commentId: string;
+};

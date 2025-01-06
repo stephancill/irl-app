@@ -35,13 +35,14 @@ export async function sendFrameNotifications({
   /** The id of the notification (defaults to a random uuid) */
   notificationId?: string;
 }): Promise<SendFrameNotificationResult> {
+  notificationId = notificationId || crypto.randomUUID();
   const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      notificationId: notificationId || crypto.randomUUID(),
+      notificationId,
       title,
       body,
       targetUrl,
@@ -50,6 +51,8 @@ export async function sendFrameNotifications({
   });
 
   const responseJson = await response.json();
+
+  console.log("responseJson", responseJson);
 
   if (response.status === 200) {
     const responseBody = sendNotificationResponseSchema.safeParse(responseJson);
@@ -112,7 +115,7 @@ export async function sendFrameNotification({
     url = params.url;
   }
 
-  await sendFrameNotifications({
+  const result = await sendFrameNotifications({
     title,
     body,
     url,
@@ -120,6 +123,8 @@ export async function sendFrameNotification({
     tokens: [token],
     notificationId,
   });
+
+  return result;
 }
 
 export async function setUserNotificationDetails(

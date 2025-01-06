@@ -7,6 +7,8 @@ import { useSession } from "@/providers/SessionProvider";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { Post } from "@/types/post";
+import { UserDehydrated } from "@neynar/nodejs-sdk/build/api";
 
 export default function PostDetail() {
   const params = useParams<{ postId: string }>();
@@ -25,7 +27,11 @@ export default function PostDetail() {
         const json = await res.json();
         throw new Error(json.error.toLowerCase());
       }
-      return res.json();
+      const result = await res.json();
+      return result as {
+        post: Post;
+        users: Record<number, UserDehydrated>;
+      };
     },
     enabled: !!params.postId && !!user,
     retry: false,
@@ -63,8 +69,9 @@ export default function PostDetail() {
         {postResponse && (
           <PostView
             post={postResponse.post}
-            postUser={postResponse.user}
+            users={postResponse.users}
             onDelete={() => router.push("/")}
+            commentsShown={true}
           />
         )}
       </div>

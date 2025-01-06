@@ -296,7 +296,7 @@ export function App() {
                 <PostView
                   key={post.id}
                   post={post}
-                  postUser={page.users[post.fid]}
+                  users={page.users}
                   onDelete={() => {
                     refetch();
                     refetchUser();

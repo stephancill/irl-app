@@ -15,6 +15,8 @@ export const postsForRendering = db
   .selectFrom("posts")
   .innerJoin("users", "users.id", "posts.userId")
   .innerJoin("postAlerts", "postAlerts.id", "posts.postAlertId")
+  .leftJoin("comments", "comments.postId", "posts.id")
+  .leftJoin("users as comment_users", "comment_users.id", "comments.userId")
   .select([
     "posts.id",
     "posts.frontImageUrl",
@@ -58,4 +60,24 @@ export const postsForRendering = db
       WHERE 
         streak_group = (SELECT streak_group FROM streaks WHERE post_date = (SELECT MAX(post_date) FROM streaks))
     )`.as("userStreak"),
-  ]);
+    sql<any[]>`
+      COALESCE(
+        NULLIF(
+          JSON_AGG(
+            CASE WHEN comments.id IS NOT NULL THEN
+              JSON_BUILD_OBJECT(
+                'id', comments.id,
+                'content', comments.content,
+                'createdAt', comments.created_at,
+                'userId', comments.user_id,
+                'userFid', comment_users.fid
+              )
+            END
+          ) FILTER (WHERE comments.deleted_at IS NULL)::text,
+          '[null]'
+        )::json,
+        '[]'::json
+      )
+    `.as("comments"),
+  ])
+  .groupBy(["posts.id", "users.id", "postAlerts.id"]);

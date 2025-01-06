@@ -1,16 +1,20 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import sdk from "@farcaster/frame-sdk";
 import { type UserDehydrated } from "@neynar/nodejs-sdk/build/api";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
+  ChevronDown,
   EyeOff,
+  Flame,
+  Loader2,
   MoreVertical,
+  SendHorizontal,
   Trash,
   User as UserIcon,
   Zap,
-  Flame,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { twMerge } from "tailwind-merge";
 import { getRelativeTime } from "../lib/utils";
 import { useSession } from "../providers/SessionProvider";
 import { Post } from "../types/post";
@@ -22,38 +26,80 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { twMerge } from "tailwind-merge";
+import { Input } from "./ui/input";
 
 interface PostViewProps {
   post: Post;
-  postUser: UserDehydrated | null;
+  users: Record<string, UserDehydrated>;
   onDelete?: () => void;
+  commentsShown?: boolean;
 }
 
 export function PostView({
   post: initialPost,
-  postUser,
+  users: initialUsers,
+  commentsShown = false,
   onDelete,
 }: PostViewProps) {
   const { user, authFetch } = useSession();
 
   const [shouldRefetch, setShouldRefetch] = useState(false);
+  const [commentText, setCommentText] = useState("");
+  const [showComments, setShowComments] = useState(commentsShown);
 
-  const { data: post } = useQuery({
+  const {
+    data: { post, users },
+    refetch: refetchPost,
+  } = useQuery({
     queryKey: ["post", initialPost.id],
     queryFn: async () => {
       const res = await authFetch(`/api/posts/${initialPost.id}`);
       if (!res.ok) throw new Error("Failed to fetch post");
-      const { post } = await res.json();
-      return post as Post;
+      const postResponse = await res.json();
+      return postResponse as {
+        post: Post;
+        users: Record<number, UserDehydrated>;
+      };
     },
     enabled: shouldRefetch,
-    initialData: initialPost,
+    initialData: { post: initialPost, users: initialUsers },
     refetchInterval: shouldRefetch ? 1000 : undefined,
   });
 
+  const createComment = useMutation({
+    mutationFn: async (comment: string) => {
+      const res = await authFetch(`/api/posts/${post.id}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ comment }),
+      });
+      if (!res.ok) throw new Error("Failed to create comment");
+      return res.json();
+    },
+    onSuccess: () => {
+      setCommentText("");
+      setShowComments(true);
+      void refetchPost();
+    },
+  });
+
+  const deleteComment = useMutation({
+    mutationFn: async (commentId: string) => {
+      const res = await authFetch(
+        `/api/posts/${post.id}/comments/${commentId}`,
+        {
+          method: "DELETE",
+        }
+      );
+      if (!res.ok) throw new Error("Failed to delete comment");
+      return res.json();
+    },
+    onSuccess: () => {
+      void refetchPost();
+    },
+  });
+
   const [primaryImage, setPrimaryImage] = useState<"front" | "back">(
-    post.primaryImage
+    initialPost.primaryImage
   );
   const [isMainLoading, setIsMainLoading] = useState(true);
   const [isThumbnailLoading, setIsThumbnailLoading] = useState(true);
@@ -80,6 +126,8 @@ export function PostView({
     } else {
       setShouldRefetch(true);
     }
+
+    setPrimaryImage(post.primaryImage);
   }, [post]);
 
   return (
@@ -87,11 +135,13 @@ export function PostView({
       <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-2">
           <Avatar className={twMerge("border")}>
-            <AvatarImage src={postUser?.pfp_url} />
-            <AvatarFallback>{postUser?.username}</AvatarFallback>
+            <AvatarImage src={users[post.fid]?.pfp_url} />
+            <AvatarFallback>{users[post.fid]?.username}</AvatarFallback>
           </Avatar>
           <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-lg">{postUser?.username}</p>
+            <p className="text-sm font-bold text-lg">
+              {users[post.fid]?.username}
+            </p>
             {post.userStreak > 1 && (
               <div className="bg-yellow-400 rounded-full py-0.5 px-1 flex items-center justify-center">
                 <Flame className="w-3 h-3 text-white fill-current" />
@@ -119,7 +169,7 @@ export function PostView({
               <DropdownMenuItem
                 onClick={() => {
                   sdk.actions.openUrl(
-                    `https://warpcast.com/${postUser?.username}`
+                    `https://warpcast.com/${users[post.fid]?.username}`
                   );
                 }}
               >
@@ -204,6 +254,133 @@ export function PostView({
             </div>
           </button>
         )}
+      </div>
+
+      {/* Add comments section */}
+      <div className="px-2 flex flex-col gap-2" id="comments">
+        {post.comments.length > 0 && (
+          <>
+            <button
+              className="text-sm text-muted-foreground text-left flex items-center gap-1"
+              onClick={() => setShowComments(!showComments)}
+            >
+              <ChevronDown
+                className={twMerge(
+                  "h-4 w-4 transition-transform duration-200 rotate-[-90deg]",
+                  showComments && "rotate-[0deg]"
+                )}
+              />
+              {showComments
+                ? "hide comments"
+                : `show ${post.comments.length} comment${
+                    post.comments.length > 1 ? "s" : ""
+                  }`}
+            </button>
+
+            {showComments && (
+              <div className="flex flex-col gap-2">
+                {post.comments.map((comment) => {
+                  const commentUser = users[comment.userFid];
+                  const isDeleting = deleteComment.variables === comment.id;
+                  return (
+                    <div
+                      key={comment.id}
+                      className={twMerge(
+                        "flex gap-2 group",
+                        isDeleting && "opacity-50 pointer-events-none"
+                      )}
+                      id={`comment-${comment.id}`}
+                    >
+                      <Avatar className="w-6 h-6">
+                        <AvatarImage src={commentUser?.pfp_url} />
+                        <AvatarFallback>
+                          {commentUser?.username?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex flex-col flex-1">
+                        <div className="flex gap-2 items-center justify-between">
+                          <div className="flex gap-2 items-center">
+                            <span className="text-sm font-medium">
+                              {commentUser?.username}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {getRelativeTime(new Date(comment.createdAt))}
+                            </span>
+                          </div>
+                          {(comment.userFid === user?.fid ||
+                            post.userId === user?.id) && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => {
+                                    if (
+                                      confirm(
+                                        "are you sure you want to delete this comment?"
+                                      )
+                                    ) {
+                                      deleteComment.mutate(comment.id);
+                                    }
+                                  }}
+                                >
+                                  <Trash className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                        </div>
+                        <p className="text-sm">{comment.content}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </>
+        )}
+
+        <div className="flex gap-2 items-center">
+          <Input
+            placeholder="add a comment..."
+            className={twMerge(
+              "text-sm shadow-none",
+              commentText.trim().length === 0 ? "border-none" : "border-b"
+            )}
+            value={commentText}
+            disabled={createComment.isPending}
+            onChange={(e) => setCommentText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && commentText.trim()) {
+                createComment.mutate(commentText.trim());
+              }
+            }}
+          />
+          {commentText.trim() && (
+            <Button
+              size="icon"
+              variant="ghost"
+              className="shrink-0"
+              disabled={!commentText.trim() || createComment.isPending}
+              onClick={() => createComment.mutate(commentText.trim())}
+            >
+              {createComment.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <SendHorizontal className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );
