@@ -148,7 +148,7 @@ export function App() {
         <div className="flex items-center gap-1">
           <Menubar className="border-none p-0 shadow-none">
             <MenubarMenu>
-              <MenubarTrigger asChild className="cursor-pointer">
+              <MenubarTrigger asChild className="cursor-pointer rounded-lg">
                 <Button
                   variant="ghost"
                   size="sm"
