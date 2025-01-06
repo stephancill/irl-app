@@ -45,6 +45,7 @@ export async function generateMetadata(
       ...FRAME_METADATA,
     };
     modifiedFrame.imageUrl = `${process.env.APP_URL}/images/ref?fid=${user.fid}`;
+    modifiedFrame.button.action.url = `${process.env.APP_URL}?ref=${ref}`;
 
     return {
       title: `@${farcasterUser.username} on irl`,
