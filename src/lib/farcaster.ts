@@ -30,6 +30,10 @@ export async function getUserData(fid: number) {
 export async function getUserDatasCached(
   fids: number[]
 ): Promise<NeynarUser[]> {
+  if (fids.length === 0) {
+    return [];
+  }
+
   const neynarClient = new NeynarAPIClient(
     new Configuration({
       apiKey: process.env.NEYNAR_API_KEY!,
