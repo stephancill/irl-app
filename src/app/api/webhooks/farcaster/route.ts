@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
       if (event.notificationDetails) {
         await setUserNotificationDetails(fid, event.notificationDetails);
         await sendFrameNotification({
-          fid,
+          token: event.notificationDetails.token,
+          url: event.notificationDetails.url,
           title: "welcome to irl!",
           body: "posting is now available",
           targetUrl: process.env.APP_URL,
@@ -68,7 +69,8 @@ export async function POST(request: NextRequest) {
     case "notifications_enabled":
       await setUserNotificationDetails(fid, event.notificationDetails);
       await sendFrameNotification({
-        fid,
+        token: event.notificationDetails.token,
+        url: event.notificationDetails.url,
         title: "notifications enabled",
         body: "we'll notify you when it's time for your daily post",
         targetUrl: process.env.APP_URL,
