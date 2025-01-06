@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Input } from "./ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 interface PostViewProps {
   post: Post;
@@ -42,6 +43,7 @@ export function PostView({
   onDelete,
 }: PostViewProps) {
   const { user, authFetch } = useSession();
+  const { toast } = useToast();
 
   const [shouldRefetch, setShouldRefetch] = useState(false);
   const [commentText, setCommentText] = useState("");
@@ -79,6 +81,15 @@ export function PostView({
       setCommentText("");
       setShowComments(true);
       void refetchPost();
+      toast({
+        description: "comment added successfully",
+      });
+    },
+    onError: () => {
+      toast({
+        variant: "destructive",
+        description: "failed to add comment",
+      });
     },
   });
 
@@ -307,8 +318,7 @@ export function PostView({
                               {getRelativeTime(new Date(comment.createdAt))}
                             </span>
                           </div>
-                          {(comment.userFid === user?.fid ||
-                            post.userId === user?.id) && (
+                          {comment.userId === user?.id && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button

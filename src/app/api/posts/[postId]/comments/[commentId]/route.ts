@@ -6,8 +6,8 @@ export const DELETE = withAuth<{ params: Promise<{ commentId: string }> }>(
     const { commentId } = await context.params;
     const deleted = await db
       .deleteFrom("comments")
-      .where("id", "=", commentId)
-      .where("userId", "=", user.id)
+      .where("comments.id", "=", commentId)
+      .where("comments.userId", "=", user.id)
       .executeTakeFirst();
 
     if (!deleted) {
