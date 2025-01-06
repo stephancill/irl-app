@@ -79,7 +79,7 @@ declare module "lucia" {
       fid: number;
       created_at: Date;
       updated_at: Date;
-      timezone: string;
+      timezone: string | null;
     };
   }
 }

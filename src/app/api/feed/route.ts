@@ -38,6 +38,10 @@ export const GET = withAuth(async (req, user) => {
 
   let posts = await query.execute();
 
+  if (!user.timezone) {
+    throw new Error("User has no timezone");
+  }
+
   // Replace image urls with placeholder if user hasn't posted today
   const latestAlert = await latestPostAlert
     .where("timezone", "=", user.timezone)
