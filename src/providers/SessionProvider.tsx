@@ -43,17 +43,34 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     mutationFn: async () => {
       if (!context?.user?.fid) return;
 
+      // Check local storage first
+      const storedSession = localStorage.getItem("userSession");
+      if (storedSession) {
+        const session = JSON.parse(storedSession) as Session;
+
+        if (new Date(session.expiresAt).getTime() < Date.now()) {
+          localStorage.removeItem("userSession");
+        } else {
+          return session;
+        }
+      }
+
       const challengeId = crypto.randomUUID();
       const challenge = await fetchChallenge(challengeId);
 
       const result = await sdk.actions.signIn({ nonce: challenge });
 
-      return signIn({
+      const session = await signIn({
         ...result,
         challengeId,
         referrerId:
           searchParams.get("ref") || searchParams.get("referrer") || undefined,
       });
+
+      // Store the session in localStorage
+      localStorage.setItem("userSession", JSON.stringify(session));
+
+      return session;
     },
     onSuccess: () => {
       refetchUser();
@@ -91,6 +108,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       refetchUser();
     },
+    onError: () => {
+      if (session) {
+        // If session is set, but we get an error, remove it from local storage
+        localStorage.removeItem("userSession");
+        signInMutation();
+      }
+    },
   });
 
   useEffect(() => {
@@ -100,6 +124,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [isSDKLoaded, context?.user?.fid, signInMutation, isError]);
 
   const logout = () => {
+    localStorage.removeItem("userSession");
     router.push("/logout");
   };
 
