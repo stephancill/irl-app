@@ -145,7 +145,7 @@ export function PostView({
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between px-2">
         <div
-          className="flex items-center gap-2"
+          className="flex items-center gap-2 cursor-pointer"
           onClick={() => {
             sdk.actions.viewProfile({
               fid: post.fid,
@@ -304,7 +304,7 @@ export function PostView({
                       id={`comment-${comment.id}`}
                     >
                       <Avatar
-                        className="w-6 h-6"
+                        className="w-6 h-6 cursor-pointer"
                         onClick={() => {
                           sdk.actions.viewProfile({
                             fid: commentUser?.fid!,
@@ -320,7 +320,7 @@ export function PostView({
                         <div className="flex gap-2 items-center justify-between">
                           <div className="flex gap-2 items-center">
                             <span
-                              className="text-sm font-medium"
+                              className="text-sm font-medium cursor-pointer"
                               onClick={() => {
                                 sdk.actions.viewProfile({
                                   fid: commentUser?.fid!,
