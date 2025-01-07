@@ -34,12 +34,14 @@ interface PostViewProps {
   users: Record<string, UserDehydrated>;
   onDelete?: () => void;
   commentsShown?: boolean;
+  headerShown?: boolean;
 }
 
 export function PostView({
   post: initialPost,
   users: initialUsers,
   commentsShown = false,
+  headerShown = true,
   onDelete,
 }: PostViewProps) {
   const { user, authFetch } = useSession();
@@ -143,73 +145,75 @@ export function PostView({
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between px-2">
-        <div
-          className="flex items-center gap-2 cursor-pointer"
-          onClick={() => {
-            sdk.actions.viewProfile({
-              fid: post.fid,
-            });
-          }}
-        >
-          <Avatar className={twMerge("border")}>
-            <AvatarImage src={users[post.fid]?.pfp_url} />
-            <AvatarFallback>{users[post.fid]?.username}</AvatarFallback>
-          </Avatar>
+      {headerShown && (
+        <div className="flex items-center justify-between px-2">
+          <div
+            className="flex items-center gap-2 cursor-pointer"
+            onClick={() => {
+              sdk.actions.viewProfile({
+                fid: post.fid,
+              });
+            }}
+          >
+            <Avatar className={twMerge("border")}>
+              <AvatarImage src={users[post.fid]?.pfp_url} />
+              <AvatarFallback>{users[post.fid]?.username}</AvatarFallback>
+            </Avatar>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-bold text-lg">
+                {users[post.fid]?.username}
+              </p>
+              {post.userStreak > 1 && (
+                <div className="bg-yellow-400 rounded-full py-0.5 px-1 flex items-center justify-center">
+                  <Flame className="w-3 h-3 text-white fill-current" />
+                  <span className="text-[10px] font-bold text-white ml-0.5 pr-0.5">
+                    {post.userStreak}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
           <div className="flex items-center gap-2">
-            <p className="text-sm font-bold text-lg">
-              {users[post.fid]?.username}
+            <p className="text-sm text-muted-foreground">
+              {post.createdAt ? getRelativeTime(new Date(post.createdAt)) : ""}
             </p>
-            {post.userStreak > 1 && (
-              <div className="bg-yellow-400 rounded-full py-0.5 px-1 flex items-center justify-center">
-                <Flame className="w-3 h-3 text-white fill-current" />
-                <span className="text-[10px] font-bold text-white ml-0.5 pr-0.5">
-                  {post.userStreak}
-                </span>
-              </div>
+            {post.postOnTime && (
+              <Zap fill="yellow" className="h-4 w-4 text-yellow-400" />
+            )}
+            {post.userId === user?.id && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-1">
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {post.userId === user?.id && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={async () => {
+                        if (
+                          confirm("are you sure you want to delete this post?")
+                        ) {
+                          const res = await authFetch(`/api/posts/${post.id}`, {
+                            method: "DELETE",
+                          });
+                          if (res.ok && onDelete) {
+                            onDelete();
+                          }
+                        }
+                      }}
+                    >
+                      <Trash className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">
-            {post.createdAt ? getRelativeTime(new Date(post.createdAt)) : ""}
-          </p>
-          {post.postOnTime && (
-            <Zap fill="yellow" className="h-4 w-4 text-yellow-400" />
-          )}
-          {post.userId === user?.id && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="w-1">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {post.userId === user?.id && (
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onClick={async () => {
-                      if (
-                        confirm("are you sure you want to delete this post?")
-                      ) {
-                        const res = await authFetch(`/api/posts/${post.id}`, {
-                          method: "DELETE",
-                        });
-                        if (res.ok && onDelete) {
-                          onDelete();
-                        }
-                      }
-                    }}
-                  >
-                    <Trash className="h-4 w-4 mr-2" />
-                    Delete
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Main image */}
       <div className="relative w-full aspect-[3/4]">

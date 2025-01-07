@@ -12,6 +12,7 @@ import {
   TreeDeciduous,
   UserPlus,
   Loader2,
+  Calendar,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -39,6 +40,8 @@ import {
 } from "./ui/menubar";
 import { Switch } from "./ui/switch";
 import { twMerge } from "tailwind-merge";
+import { PostsCalendar } from "./PostsCalendar";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "./ui/sheet";
 
 type PostResponse = Post & {
   userId: string;
@@ -68,6 +71,7 @@ export function App() {
   const [debugMode, setDebugMode] = useState(false);
   const [showNotificationModal, setShowNotificationModal] = useState(false);
   const [showRulesModal, setShowRulesModal] = useState(false);
+  const [showCalendarModal, setShowCalendarModal] = useState(false);
 
   // TODO: Live refresh
   const {
@@ -147,6 +151,15 @@ export function App() {
     <div className="flex flex-col h-screen">
       <Header onClick={() => setTapCount((count) => count + 1)}>
         <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowCalendarModal(true)}
+            className="text-muted-foreground hover:text-foreground"
+            title="calendar"
+          >
+            <Calendar className="h-4 w-4" />
+          </Button>
           <Menubar className="border-none p-0 shadow-none">
             <MenubarMenu>
               <MenubarTrigger asChild className="cursor-pointer rounded-lg">
@@ -272,6 +285,21 @@ export function App() {
           </ul>
         </DialogContent>
       </Dialog>
+
+      <Sheet open={showCalendarModal} onOpenChange={setShowCalendarModal}>
+        <SheetContent className="w-full sm:max-w-[400px] px-0" side="bottom">
+          <SheetHeader>
+            <SheetTitle>your posts</SheetTitle>
+          </SheetHeader>
+          {isFetching ? (
+            <div className="flex justify-center p-4">
+              <Loader2 className="h-6 w-6 animate-spin" />
+            </div>
+          ) : (
+            <PostsCalendar />
+          )}
+        </SheetContent>
+      </Sheet>
 
       <div className="space-y-4 py-4 flex flex-col gap-4 max-w-[400px] mx-auto w-full">
         {debugMode && (
