@@ -25,7 +25,7 @@ export function PostButton({ redirect }: PostButtonProps) {
             className="text-lg p-4 w-full"
             onClick={() => {
               sdk.actions.addFrame().then((result) => {
-                if (result.added) {
+                if (result.notificationDetails) {
                   waitForNotifications(void 0, {
                     onSuccess: () => {
                       toast({

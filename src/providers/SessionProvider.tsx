@@ -1,10 +1,7 @@
 "use client";
 
 import { User } from "@/types/user";
-import sdk, {
-  FrameContext,
-  FrameNotificationDetails,
-} from "@farcaster/frame-sdk";
+import sdk, { Context, FrameNotificationDetails } from "@farcaster/frame-sdk";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Session } from "lucia";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -22,7 +19,7 @@ import {
 interface SessionContextType {
   user: User | null | undefined;
   session: Session | null | undefined;
-  context: FrameContext | null | undefined;
+  context: Context.FrameContext | null | undefined;
   isLoading: boolean;
   isError: boolean;
   refetchUser: () => void;
@@ -36,7 +33,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [isSDKLoaded, setIsSDKLoaded] = useState(false);
-  const [context, setContext] = useState<FrameContext>();
+  const [context, setContext] = useState<Context.FrameContext>();
 
   const {
     data: session,
