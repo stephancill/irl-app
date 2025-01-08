@@ -1,13 +1,15 @@
+import { cn } from "@/lib/utils";
+import type { UserDehydrated } from "@neynar/nodejs-sdk/build/api";
 import { useQuery } from "@tanstack/react-query";
-import { format, startOfMonth, endOfMonth } from "date-fns";
-import { useState } from "react";
-import { Calendar } from "./ui/calendar";
+import { endOfMonth, format, startOfMonth } from "date-fns";
+import { ChevronLeft, Loader2 } from "lucide-react";
+import Image from "next/image";
+import { memo, useState } from "react";
 import { useSession } from "../providers/SessionProvider";
 import { Post } from "../types/post";
-import Image from "next/image";
-import { Dialog, DialogContent, DialogTitle } from "./ui/dialog";
 import { PostView } from "./PostView";
-import type { UserDehydrated } from "@neynar/nodejs-sdk/build/api";
+import { buttonVariants } from "./ui/button";
+import { Calendar } from "./ui/calendar";
 import {
   Carousel,
   CarouselContent,
@@ -15,7 +17,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "./ui/carousel";
-import { ChevronLeft } from "lucide-react";
 
 type PostsResponse = {
   groupedPosts: {
@@ -24,12 +25,47 @@ type PostsResponse = {
   users: Record<number, UserDehydrated>;
 };
 
+const DayContent = memo(
+  ({ date, posts }: { date: Date; posts: PostsResponse["groupedPosts"] }) => {
+    const dateStr = format(date, "yyyy-MM-dd");
+    const dayPosts = posts?.[dateStr] || [];
+    const firstPost = dayPosts[0];
+
+    return (
+      <div className="w-full h-full relative p-2">
+        <div className="absolute inset-0 flex items-center justify-center">
+          {date.getDate()}
+        </div>
+        {firstPost?.backImageUrl && (
+          <div className="absolute inset-0 rounded-md overflow-hidden opacity-40">
+            <Image
+              key={firstPost.backImageUrl}
+              src={firstPost.backImageUrl}
+              alt="post image"
+              fill
+              className="object-cover"
+              priority={false}
+              loading="lazy"
+            />
+          </div>
+        )}
+        {dayPosts.length > 1 && (
+          <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-medium">
+            {dayPosts.length}
+          </div>
+        )}
+      </div>
+    );
+  }
+);
+DayContent.displayName = "DayContent";
+
 export function PostsCalendar() {
   const [date, setDate] = useState<Date>(new Date());
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
   const { authFetch } = useSession();
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["calendar-posts", format(date, "yyyy-MM")],
     queryFn: async () => {
       const start = format(startOfMonth(date), "yyyy-MM-dd");
@@ -47,20 +83,29 @@ export function PostsCalendar() {
 
   const { groupedPosts: posts, users } = data ?? {};
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full p-4">
+        <Loader2 className="h-6 w-6 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <>
       {selectedPost ? (
         <div className="space-y-4 max-h-[90vh] overflow-y-auto">
-          <button
-            onClick={() => setSelectedPost(null)}
-            className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ChevronLeft className="h-5 w-5" />
-            Back
+          <button onClick={() => setSelectedPost(null)} className="px-4">
+            <ChevronLeft
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100"
+              )}
+            />
           </button>
 
           {users && (
-            <Carousel className="w-full">
+            <Carousel className="w-full relative">
               <CarouselContent>
                 {posts?.[
                   format(new Date(selectedPost.createdAt), "yyyy-MM-dd")
@@ -77,15 +122,19 @@ export function PostsCalendar() {
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious />
-              <CarouselNext />
+              {(posts?.[format(new Date(selectedPost.createdAt), "yyyy-MM-dd")]
+                ?.length || 0) > 1 && (
+                <>
+                  <CarouselPrevious className="absolute left-1 top-1/2 -translate-y-1/2" />
+                  <CarouselNext className="absolute right-1 top-1/2 -translate-y-1/2" />
+                </>
+              )}
             </Carousel>
           )}
         </div>
       ) : (
         <Calendar
           mode="single"
-          selected={date}
           onSelect={(date) => {
             if (date) {
               setDate(date);
@@ -108,37 +157,9 @@ export function PostsCalendar() {
             },
           }}
           components={{
-            DayContent: ({ date }) => {
-              const dateStr = format(date, "yyyy-MM-dd");
-              const dayPosts = posts?.[dateStr] || [];
-              const firstPost = dayPosts[0];
-
-              return (
-                <div className="w-full h-full relative p-2">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    {date.getDate()}
-                  </div>
-                  {firstPost?.backImageUrl && (
-                    <div className="absolute inset-0 rounded-md overflow-hidden opacity-40">
-                      <Image
-                        key={firstPost.backImageUrl}
-                        src={firstPost.backImageUrl}
-                        alt="post image"
-                        fill
-                        className="object-cover"
-                        priority={false}
-                        loading="lazy"
-                      />
-                    </div>
-                  )}
-                  {dayPosts.length > 1 && (
-                    <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-medium">
-                      {dayPosts.length}
-                    </div>
-                  )}
-                </div>
-              );
-            },
+            DayContent: ({ date }) => (
+              <DayContent date={date} posts={posts ?? {}} />
+            ),
           }}
         />
       )}

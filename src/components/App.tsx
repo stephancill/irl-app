@@ -287,17 +287,14 @@ export function App() {
       </Dialog>
 
       <Sheet open={showCalendarModal} onOpenChange={setShowCalendarModal}>
-        <SheetContent className="w-full sm:max-w-[400px] px-0" side="bottom">
+        <SheetContent
+          className="w-full sm:max-w-[400px] min-h-[65vh] px-0"
+          side="bottom"
+        >
           <SheetHeader>
             <SheetTitle>your posts</SheetTitle>
           </SheetHeader>
-          {isFetching ? (
-            <div className="flex justify-center p-4">
-              <Loader2 className="h-6 w-6 animate-spin" />
-            </div>
-          ) : (
-            <PostsCalendar />
-          )}
+          <PostsCalendar />
         </SheetContent>
       </Sheet>
 
