@@ -39,4 +39,11 @@ const accountAssociations = {
     signature:
       "MHg3YmRjM2RjN2QwMDJkZjBiMmM3ZTc1YTQ5YTY5MjkzMGI0Y2U2M2ZhN2M0MWM1MTdmYzNmNzY5M2NjYmE4ZGQwMzMxNmZjYjI0Nzc5NzA4MzUxZjIzOGJmMmU3NWNiMjQzMmUwZDVjNmQxOWYwZGYzMWJmZjYwODQ2MjdhZjE2NjFi",
   },
+  "http://localhost:3000": {
+    header:
+      "eyJmaWQiOjE2ODksInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgyNzM4QjIxY0I5NTIwMzM4RjlBMzc1YzNiOTcxQjE3NzhhZTEwMDRhIn0",
+    payload: "eyJkb21haW4iOiJsb2NhbGhvc3QifQ",
+    signature:
+      "MHhmOWJkZGQ1MDA4Njc3NjZlYmI1ZmNjODk1NThjZWIxMTc5NjAwNjRlZmFkZWZjZmY4NGZhMzdiMjYxZjU1ZmYzMmZiMDg5NmY4NWU0MmM1YjM4MjQxN2NlMjFhOTBlYmM4YTIzOWFkNjE0YzA2ODM0ZDQ1ODk5NDI3YjE5ZjNkYTFi",
+  },
 };

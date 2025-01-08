@@ -23,11 +23,11 @@ export const POST = withAuth<{ params: Promise<{ postId: string }> }>(
       return Response.json({ error: "Post not found" }, { status: 404 });
     }
 
-    const mutuals = await withCache(getMutualsKey(post.fid), () =>
-      getMutuals(post.fid)
+    const mutuals = await withCache(getMutualsKey(user.fid), () =>
+      getMutuals(user.fid)
     );
     const isMutual =
-      user.fid === post.fid || mutuals.some((m) => m.fid === user.fid);
+      user.fid === post.fid || mutuals.some((m) => m.fid === post.fid);
 
     if (!isMutual) {
       return Response.json(
