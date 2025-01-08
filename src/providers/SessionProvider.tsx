@@ -23,8 +23,11 @@ interface SessionContextType {
   isLoading: boolean;
   isError: boolean;
   refetchUser: () => void;
-  logout: () => void;
   authFetch: typeof fetch;
+}
+
+function formatLocalStorageSessionKey(fid: number) {
+  return `userSession-${fid}`;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
@@ -44,12 +47,16 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (!context?.user?.fid) return;
 
       // Check local storage first
-      const storedSession = localStorage.getItem("userSession");
+      const storedSession = localStorage.getItem(
+        formatLocalStorageSessionKey(context.user.fid)
+      );
       if (storedSession) {
         const session = JSON.parse(storedSession) as Session;
 
         if (new Date(session.expiresAt).getTime() < Date.now()) {
-          localStorage.removeItem("userSession");
+          localStorage.removeItem(
+            formatLocalStorageSessionKey(context.user.fid)
+          );
         } else {
           return session;
         }
@@ -109,9 +116,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       refetchUser();
     },
     onError: () => {
-      if (session) {
+      if (session && context?.user?.fid) {
         // If session is set, but we get an error, remove it from local storage
-        localStorage.removeItem("userSession");
+        localStorage.removeItem(formatLocalStorageSessionKey(context.user.fid));
         signInMutation();
       }
     },
@@ -119,14 +126,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (isSDKLoaded && context?.user?.fid && isError) {
+      // localStorage.removeItem(formatLocalStorageSessionKey(context.user.fid));
       signInMutation();
     }
   }, [isSDKLoaded, context?.user?.fid, signInMutation, isError]);
-
-  const logout = () => {
-    localStorage.removeItem("userSession");
-    router.push("/logout");
-  };
 
   useEffect(() => {
     const load = async () => {
@@ -188,7 +191,6 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         isLoading: isLoading || !isSDKLoaded || isSigningIn,
         isError,
         refetchUser,
-        logout,
         authFetch,
       }}
     >
