@@ -75,7 +75,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       });
 
       // Store the session in localStorage
-      localStorage.setItem("userSession", JSON.stringify(session));
+      localStorage.setItem(
+        formatLocalStorageSessionKey(context.user.fid),
+        JSON.stringify(session)
+      );
 
       return session;
     },
@@ -106,8 +109,9 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   } = useQuery({
     queryKey: ["user"],
     queryFn: () => fetchUser(authFetch),
-    enabled: isSDKLoaded,
+    enabled: isSDKLoaded && !!context?.user?.fid,
     refetchInterval: 1000 * 60,
+    retry: false,
   });
 
   const { mutate: setNotificationsMutation } = useMutation({
