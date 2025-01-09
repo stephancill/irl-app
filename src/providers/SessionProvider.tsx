@@ -129,11 +129,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
-    if (isSDKLoaded && context?.user?.fid && isError) {
+    if (isSDKLoaded && context?.user?.fid && session && isError) {
       // localStorage.removeItem(formatLocalStorageSessionKey(context.user.fid));
       signInMutation();
     }
-  }, [isSDKLoaded, context?.user?.fid, signInMutation, isError]);
+  }, [isSDKLoaded, context?.user?.fid, signInMutation, isError, session]);
 
   useEffect(() => {
     const load = async () => {
