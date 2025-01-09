@@ -137,18 +137,6 @@ export function App() {
       },
     });
 
-  // Add effect to show feed instability warning
-  useEffect(() => {
-    if (data || error) {
-      toast({
-        title: "Feed Instability",
-        description:
-          "We're experiencing some feed instability. Posts may take longer to appear.",
-        variant: "warning",
-      });
-    }
-  }, [data, error, toast]);
-
   if (isLoading || sessionLoading)
     return (
       <div className="absolute inset-0 flex items-center justify-center bg-gray-100">

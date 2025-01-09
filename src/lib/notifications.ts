@@ -52,8 +52,6 @@ export async function sendFrameNotifications({
 
   const responseJson = await response.json();
 
-  console.log("responseJson", responseJson);
-
   if (response.status === 200) {
     const responseBody = sendNotificationResponseSchema.safeParse(responseJson);
     if (responseBody.success === false) {

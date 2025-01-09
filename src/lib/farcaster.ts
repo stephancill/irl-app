@@ -1,5 +1,10 @@
 import { Message, UserDataAddMessage, UserDataType } from "@farcaster/core";
 import { Configuration, NeynarAPIClient } from "@neynar/nodejs-sdk";
+import {
+  QueryParameter,
+  DuneClient,
+  RunQueryArgs,
+} from "@duneanalytics/client-sdk";
 import { redisCache } from "./redis";
 import { getUserDataKey } from "./keys";
 import { type User as NeynarUser } from "@neynar/nodejs-sdk/build/api";
@@ -81,20 +86,22 @@ export async function getUserDatasCached(
 }
 
 export async function getMutuals(fid: number) {
-  const neynarClient = new NeynarAPIClient(
-    new Configuration({
-      apiKey: process.env.NEYNAR_API_KEY!,
-    })
-  );
+  const client = new DuneClient(process.env.DUNE_API_KEY);
+  const opts: RunQueryArgs = {
+    queryId: 4546070,
+    query_parameters: [QueryParameter.number("fid", fid)],
+  };
 
-  const res = await neynarClient.fetchRelevantFollowers({
-    targetFid: fid,
-    viewerFid: fid,
-  });
+  const rows = await client
+    .runQuery(opts)
+    .then(
+      (executionResult) =>
+        executionResult.result?.rows as { fid: number }[] | undefined
+    );
 
-  const users = res.all_relevant_followers_dehydrated
-    .map((f) => f.user)
-    .filter((f) => f !== undefined);
+  if (!rows) {
+    throw new Error("Failed to fetch mutuals");
+  }
 
-  return users;
+  return rows;
 }
