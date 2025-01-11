@@ -10,10 +10,16 @@ export const GET = withAuth(async (req, user, context) => {
     return Response.json({ error: "Missing start or end" }, { status: 400 });
   }
 
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  startDate.setHours(0, 0, 0, 0);
+  endDate.setHours(23, 59, 59, 999);
+
   const posts = await postsForRendering
     .where("posts.userId", "=", user.id)
-    .where("posts.createdAt", ">=", new Date(start))
-    .where("posts.createdAt", "<=", new Date(end))
+    .where("posts.createdAt", ">=", startDate)
+    .where("posts.createdAt", "<=", endDate)
     .execute();
 
   const [userData] = await getUserDatasCached([user.fid]);

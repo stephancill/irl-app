@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import type { UserDehydrated } from "@neynar/nodejs-sdk/build/api";
 import { useQuery } from "@tanstack/react-query";
 import { endOfMonth, format, startOfMonth } from "date-fns";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import Image from "next/image";
 import { memo, useState } from "react";
 import { useSession } from "../providers/SessionProvider";
@@ -17,6 +17,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "./ui/carousel";
+import { Skeleton } from "./ui/skeleton";
 
 type PostsResponse = {
   groupedPosts: {
@@ -26,7 +27,15 @@ type PostsResponse = {
 };
 
 const DayContent = memo(
-  ({ date, posts }: { date: Date; posts: PostsResponse["groupedPosts"] }) => {
+  ({
+    date,
+    posts,
+    isLoading,
+  }: {
+    date: Date;
+    posts: PostsResponse["groupedPosts"];
+    isLoading: boolean;
+  }) => {
     const dateStr = format(date, "yyyy-MM-dd");
     const dayPosts = posts?.[dateStr] || [];
     const firstPost = dayPosts[0];
@@ -36,20 +45,24 @@ const DayContent = memo(
         <div className="absolute inset-0 flex items-center justify-center">
           {date.getDate()}
         </div>
-        {firstPost?.backImageUrl && (
-          <div className="absolute inset-0 rounded-md overflow-hidden opacity-40">
-            <Image
-              key={firstPost.backImageUrl}
-              src={firstPost.backImageUrl}
-              alt="post image"
-              fill
-              className="object-cover"
-              priority={false}
-              loading="lazy"
-            />
-          </div>
+        {isLoading ? (
+          <Skeleton className="absolute inset-0 rounded-md" />
+        ) : (
+          firstPost?.backImageUrl && (
+            <div className="absolute inset-0 rounded-md overflow-hidden opacity-40">
+              <Image
+                key={firstPost.backImageUrl}
+                src={firstPost.backImageUrl}
+                alt="post image"
+                fill
+                className="object-cover"
+                priority={false}
+                loading="lazy"
+              />
+            </div>
+          )
         )}
-        {dayPosts.length > 1 && (
+        {!isLoading && dayPosts.length > 1 && (
           <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-medium">
             {dayPosts.length}
           </div>
@@ -79,17 +92,14 @@ export function PostsCalendar() {
       const data: PostsResponse = await res.json();
       return data;
     },
+    staleTime: Infinity,
   });
 
   const { groupedPosts: posts, users } = data ?? {};
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full p-4">
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
-    );
-  }
+  const handleMonthChange = (month: Date) => {
+    setDate(month);
+  };
 
   return (
     <>
@@ -137,7 +147,6 @@ export function PostsCalendar() {
           mode="single"
           onSelect={(date) => {
             if (date) {
-              setDate(date);
               const dateStr = format(date, "yyyy-MM-dd");
               const dayPosts = posts?.[dateStr] || [];
               if (dayPosts.length > 0) {
@@ -145,6 +154,7 @@ export function PostsCalendar() {
               }
             }
           }}
+          onMonthChange={handleMonthChange}
           modifiers={{
             hasPost: (date) => {
               const dateStr = format(date, "yyyy-MM-dd");
@@ -158,7 +168,11 @@ export function PostsCalendar() {
           }}
           components={{
             DayContent: ({ date }) => (
-              <DayContent date={date} posts={posts ?? {}} />
+              <DayContent
+                date={date}
+                posts={posts ?? {}}
+                isLoading={isLoading}
+              />
             ),
           }}
         />
