@@ -5,6 +5,7 @@ import { useWaitForNotifications } from "../hooks/use-wait-for-notifications";
 import { useToast } from "../hooks/use-toast";
 import Countdown, { zeroPad } from "react-countdown";
 import Link from "next/link";
+import { Loader2 } from "lucide-react";
 
 type PostButtonProps = {
   /** Location to redirect to after posting */
@@ -14,7 +15,7 @@ type PostButtonProps = {
 export function PostButton({ redirect }: PostButtonProps) {
   const { context, user } = useSession();
   const { toast } = useToast();
-  const { mutate: waitForNotifications } = useWaitForNotifications();
+  const { mutate: waitForNotifications, isPending } = useWaitForNotifications();
 
   return (
     <div className="fixed bottom-0 left-0 right-0 p-4 flex justify-center z-50">
@@ -23,6 +24,7 @@ export function PostButton({ redirect }: PostButtonProps) {
           <Button
             size={"lg"}
             className="text-lg p-4 w-full"
+            disabled={isPending}
             onClick={() => {
               sdk.actions.addFrame().then((result) => {
                 if (result.notificationDetails) {
@@ -45,6 +47,9 @@ export function PostButton({ redirect }: PostButtonProps) {
               });
             }}
           >
+            {isPending ? (
+              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+            ) : null}
             add frame to post
           </Button>
         ) : (

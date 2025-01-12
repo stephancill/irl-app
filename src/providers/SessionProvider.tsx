@@ -22,8 +22,11 @@ interface SessionContextType {
   context: Context.FrameContext | null | undefined;
   isLoading: boolean;
   isError: boolean;
-  refetchUser: () => void;
   authFetch: typeof fetch;
+  /** Trigger refetch of user query */
+  refetchUser: () => void;
+  /** Fetch user from server */
+  fetchUser: () => Promise<User>;
 }
 
 function formatLocalStorageSessionKey(fid: number) {
@@ -40,11 +43,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
   const {
     data: session,
-    mutate: signInMutation,
-    isPending: isSigningIn,
-  } = useMutation({
-    mutationFn: async () => {
-      if (!context?.user?.fid) return;
+    isLoading: isLoadingSession,
+    refetch: refetchSession,
+    isFetching: isFetchingSession,
+  } = useQuery({
+    queryKey: ["session"],
+    queryFn: async () => {
+      if (!context?.user?.fid) return null;
 
       // Check local storage first
       const storedSession = localStorage.getItem(
@@ -82,9 +87,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
 
       return session;
     },
-    onSuccess: () => {
-      refetchUser();
-    },
+    enabled: isSDKLoaded && !!context?.user?.fid,
   });
 
   const authFetch = useCallback(
@@ -101,15 +104,25 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     [session?.id]
   );
 
+  const fetchUser = useCallback(async () => {
+    const response = await authFetch("/api/user");
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch user ${response.status}`);
+    }
+
+    return response.json();
+  }, [authFetch]);
+
   const {
     data: user,
-    isLoading,
+    isLoading: isLoadingUser,
     isError,
     refetch: refetchUser,
   } = useQuery({
-    queryKey: ["user"],
-    queryFn: () => fetchUser(authFetch),
-    enabled: isSDKLoaded && !!context?.user?.fid,
+    queryKey: ["user", session?.id],
+    queryFn: fetchUser,
+    enabled: isSDKLoaded && !!context?.user?.fid && !!session,
     refetchInterval: 1000 * 60,
     retry: false,
   });
@@ -123,17 +136,27 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       if (session && context?.user?.fid) {
         // If session is set, but we get an error, remove it from local storage
         localStorage.removeItem(formatLocalStorageSessionKey(context.user.fid));
-        signInMutation();
+        refetchSession();
       }
     },
   });
 
   useEffect(() => {
-    if (isSDKLoaded && context?.user?.fid && session && isError) {
-      // localStorage.removeItem(formatLocalStorageSessionKey(context.user.fid));
-      signInMutation();
+    refetchUser();
+  }, [session, refetchUser]);
+
+  useEffect(() => {
+    if (
+      isSDKLoaded &&
+      context?.user?.fid &&
+      session &&
+      isError &&
+      !isLoadingUser
+    ) {
+      localStorage.removeItem(formatLocalStorageSessionKey(context.user.fid));
+      refetchSession();
     }
-  }, [isSDKLoaded, context?.user?.fid, signInMutation, isError, session]);
+  }, [isSDKLoaded, context?.user?.fid, refetchSession, isError, session]);
 
   useEffect(() => {
     const load = async () => {
@@ -175,7 +198,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, [user, context, setNotificationsMutation]);
 
   useEffect(() => {
-    if (isLoading || !isSDKLoaded) return;
+    if (isLoadingUser || !isSDKLoaded) return;
     const currentPath = window.location.pathname;
     const searchParams = window.location.search;
 
@@ -184,7 +207,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     if (user && !user.timezone) {
       router.push(`/location?redirect=${redirectUrl}`);
     }
-  }, [user, isLoading, isError, router, isSDKLoaded]);
+  }, [user, isLoadingUser, isError, router, isSDKLoaded]);
 
   return (
     <SessionContext.Provider
@@ -192,10 +215,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
         user,
         session,
         context,
-        isLoading: isLoading || !isSDKLoaded || isSigningIn,
+        isLoading: isLoadingUser || isFetchingSession || !isSDKLoaded,
         isError,
         refetchUser,
         authFetch,
+        fetchUser,
       }}
     >
       {children}
@@ -245,16 +269,6 @@ async function signIn({
   }
 
   return session;
-}
-
-export async function fetchUser(fetchFn: typeof fetch = fetch): Promise<User> {
-  const response = await fetchFn("/api/user");
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch user ${response.status}`);
-  }
-
-  return response.json();
 }
 
 async function setNotificationDetails(

@@ -107,6 +107,8 @@ export async function POST(req: NextRequest) {
         throw new Error("Failed to create user");
       }
 
+      dbUser = newUser;
+
       if (referrerId) {
         await db
           .insertInto("referrals")
@@ -137,6 +139,7 @@ export async function POST(req: NextRequest) {
   }
 
   if (!dbUser) {
+    console.error("No db user found");
     return Response.json({ error: "Failed to create user" }, { status: 500 });
   }
 

@@ -1,8 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
-import { fetchUser, useSession } from "../providers/SessionProvider";
+import { useSession } from "../providers/SessionProvider";
 
 export function useWaitForNotifications() {
-  const { refetchUser, authFetch } = useSession();
+  const { refetchUser, fetchUser } = useSession();
 
   return useMutation({
     mutationFn: async () => {
@@ -11,7 +11,7 @@ export function useWaitForNotifications() {
 
       while (attempts < MAX_ATTEMPTS) {
         await new Promise((resolve) => setTimeout(resolve, 1000)); // Wait 1 second
-        const updatedUser = await fetchUser(authFetch);
+        const updatedUser = await fetchUser();
 
         if (updatedUser?.notificationsEnabled) {
           refetchUser();

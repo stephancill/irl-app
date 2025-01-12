@@ -147,6 +147,22 @@ export function App() {
     );
   if (error) return <div>Error loading feed</div>;
 
+  if (!user) {
+    return (
+      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+        <div className="flex flex-col items-center justify-center gap-4 text-center p-8">
+          <TreeDeciduous className="h-12 w-12 text-muted-foreground" />
+          <p className="text-lg font-medium text-muted-foreground">
+            welcome to irl!
+          </p>
+          <p className="text-sm text-muted-foreground">
+            sign in with farcaster to get started
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col h-screen">
       <Header onClick={() => setTapCount((count) => count + 1)}>

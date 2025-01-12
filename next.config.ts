@@ -11,6 +11,9 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  experimental: {
+    serverComponentsExternalPackages: ["bullmq"],
+  },
 };
 
 export default withSentryConfig(nextConfig, {
