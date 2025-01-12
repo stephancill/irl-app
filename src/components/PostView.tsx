@@ -125,23 +125,24 @@ export function PostView({
   const placeholderClass = "w-full h-full bg-gray-200 rounded-md";
 
   const isPostReady = useMemo(() => {
-    return (
-      post.frontImageUrl &&
+    return post.frontImageUrl &&
       post.backImageUrl &&
       user !== undefined &&
-      user?.postsToday !== 0
-    );
+      user !== null &&
+      user.postsToday !== 0
+      ? true
+      : false;
   }, [post, user]);
 
   useEffect(() => {
     if (post.frontImageUrl && post.backImageUrl) {
       setShouldRefetch(false);
-    } else {
+    } else if (user !== undefined && user !== null && user.postsToday > 0) {
       setShouldRefetch(true);
     }
 
     setPrimaryImage(post.primaryImage);
-  }, [post]);
+  }, [post, user]);
 
   return (
     <div className="flex flex-col gap-3">
