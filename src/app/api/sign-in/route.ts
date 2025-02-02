@@ -99,6 +99,7 @@ export async function POST(req: NextRequest) {
         .values({
           fid,
           timezone,
+          newPostNotifications: true,
         })
         .returningAll()
         .executeTakeFirst();
