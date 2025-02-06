@@ -307,11 +307,6 @@ export function PostView({
                         isDeleting && "opacity-50 pointer-events-none"
                       )}
                       id={`comment-${comment.id}`}
-                      onClick={() => {
-                        // Populate the text input with `@${commentUser?.username} and make it active`
-                        setCommentText(`@${commentUser?.username} `);
-                        commentInputRef.current?.focus();
-                      }}
                     >
                       <Avatar
                         className="w-6 h-6 cursor-pointer"
@@ -328,15 +323,15 @@ export function PostView({
                       </Avatar>
                       <div className="flex flex-col flex-1">
                         <div className="flex gap-2 items-center justify-between">
-                          <div className="flex gap-2 items-center">
-                            <span
-                              className="text-sm font-medium cursor-pointer"
-                              onClick={() => {
-                                sdk.actions.viewProfile({
-                                  fid: commentUser?.fid!,
-                                });
-                              }}
-                            >
+                          <div
+                            className="flex gap-2 items-center"
+                            onClick={() => {
+                              // Populate the text input with `@${commentUser?.username} and make it active`
+                              setCommentText(`@${commentUser?.username} `);
+                              commentInputRef.current?.focus();
+                            }}
+                          >
+                            <span className="text-sm font-medium cursor-pointer">
                               {commentUser?.username}
                             </span>
                             <span className="text-xs text-muted-foreground">
