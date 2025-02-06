@@ -1,4 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
 import sdk from "@farcaster/frame-sdk";
 import { type UserDehydrated } from "@neynar/nodejs-sdk/build/api";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -10,10 +11,9 @@ import {
   MoreVertical,
   SendHorizontal,
   Trash,
-  User as UserIcon,
   Zap,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import { getRelativeTime } from "../lib/utils";
 import { useSession } from "../providers/SessionProvider";
@@ -27,7 +27,6 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Input } from "./ui/input";
-import { useToast } from "@/hooks/use-toast";
 
 interface PostViewProps {
   post: Post;
@@ -50,6 +49,7 @@ export function PostView({
   const [shouldRefetch, setShouldRefetch] = useState(false);
   const [commentText, setCommentText] = useState("");
   const [showComments, setShowComments] = useState(commentsShown);
+  const commentInputRef = useRef<HTMLInputElement>(null);
 
   const {
     data: { post, users },
@@ -307,6 +307,11 @@ export function PostView({
                         isDeleting && "opacity-50 pointer-events-none"
                       )}
                       id={`comment-${comment.id}`}
+                      onClick={() => {
+                        // Populate the text input with `@${commentUser?.username} and make it active`
+                        setCommentText(`@${commentUser?.username} `);
+                        commentInputRef.current?.focus();
+                      }}
                     >
                       <Avatar
                         className="w-6 h-6 cursor-pointer"
@@ -381,6 +386,7 @@ export function PostView({
 
         <div className="flex gap-2 items-center">
           <Input
+            ref={commentInputRef}
             placeholder="add a comment..."
             className={twMerge(
               "text-sm shadow-none",

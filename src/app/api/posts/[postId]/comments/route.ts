@@ -56,15 +56,14 @@ export const POST = withAuth<{ params: Promise<{ postId: string }> }>(
       );
     }
 
-    // If the comment is not from the post author, notify the author
-    if (post.userId !== user.id)
-      await newCommentNotificationsQueue.add(
-        NEW_COMMENT_NOTIFICATIONS_QUEUE_NAME,
-        {
-          postId,
-          commentId: commentId.id,
-        }
-      );
+    // Process comment notifications
+    await newCommentNotificationsQueue.add(
+      NEW_COMMENT_NOTIFICATIONS_QUEUE_NAME,
+      {
+        postId,
+        commentId: commentId.id,
+      }
+    );
 
     return Response.json({ commentId });
   }

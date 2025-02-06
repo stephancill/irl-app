@@ -5,3 +5,7 @@ export function getUserDataKey(fid: number) {
 export function getMutualsKey(fid: number) {
   return `farcaster:mutuals:${fid}`;
 }
+
+export function getFidByUsernameKey(username: string) {
+  return `farcaster:fid:${username.toLowerCase().trim()}`;
+}

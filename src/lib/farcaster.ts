@@ -1,13 +1,8 @@
 import { Message, UserDataAddMessage, UserDataType } from "@farcaster/core";
 import { Configuration, NeynarAPIClient } from "@neynar/nodejs-sdk";
-import {
-  QueryParameter,
-  DuneClient,
-  RunQueryArgs,
-} from "@duneanalytics/client-sdk";
-import { redisCache } from "./redis";
-import { getUserDataKey } from "./keys";
 import { type User as NeynarUser } from "@neynar/nodejs-sdk/build/api";
+import { getFidByUsernameKey, getUserDataKey } from "./keys";
+import { redisCache } from "./redis";
 
 export async function getUserData(fid: number) {
   const res = await fetch(`${process.env.HUB_URL}/v1/userDataByFid?fid=${fid}`);
@@ -30,6 +25,86 @@ export async function getUserData(fid: number) {
   }, {} as Record<UserDataType, string | undefined>);
 
   return userData;
+}
+
+export async function getFidByUsername(username: string) {
+  const res = await fetch(
+    `${process.env.HUB_URL}/v1/userNameProofByName?name=${username}`
+  );
+
+  if (!res.ok) {
+    throw new Error(`Failed to fetch fid by username: ${res.statusText}`);
+  }
+
+  const data: {
+    fid: number | undefined;
+  } = await res.json();
+
+  if (!data.fid) {
+    throw new Error(`Failed to fetch fid by username: ${username}`);
+  }
+
+  return data.fid;
+}
+
+export async function getFidsByUsernamesCached(
+  usernames: string[]
+): Promise<number[]> {
+  const cachedFidsResponse = await redisCache.mget(
+    usernames.map((username) => getFidByUsernameKey(username))
+  );
+
+  const uncachedUsernames = cachedFidsResponse
+    .map((fid, index) => {
+      if (!fid) {
+        return usernames[index];
+      }
+    })
+    .filter((username) => username !== undefined);
+
+  const cachedFids = cachedFidsResponse
+    .map((fid) => (fid ? parseInt(fid) : undefined))
+    .filter((fid) => fid !== undefined);
+
+  if (uncachedUsernames.length === 0) {
+    return cachedFids;
+  }
+
+  const fidsWithUsernames = await Promise.all(
+    uncachedUsernames.map(async (username) => {
+      try {
+        const fid = await getFidByUsername(username);
+        return { fid, username };
+      } catch (error) {
+        console.error(`Failed to fetch fid for username: ${username}`, error);
+        return { username, fid: null };
+      }
+    })
+  );
+
+  if (fidsWithUsernames.length > 0) {
+    await redisCache.mset(
+      fidsWithUsernames
+        .map(({ fid, username }) => [
+          getFidByUsernameKey(username),
+          fid?.toString() ?? null,
+        ])
+        .flat()
+    );
+
+    let multi = redisCache.multi();
+    for (const { username, fid } of fidsWithUsernames) {
+      multi = multi.expire(
+        getFidByUsernameKey(username),
+        fid ? 60 * 60 * 24 * 30 : 60 * 60
+      ); // 30 days if fid is not null, 1 hour if fid is null
+    }
+    await multi.exec();
+  }
+
+  return [...cachedFids, ...fidsWithUsernames.map(({ fid }) => fid)].filter(
+    (fid) => fid !== null
+  );
 }
 
 export async function getUserDatasCached(
