@@ -321,16 +321,16 @@ export function PostView({
                           {commentUser?.username?.[0]}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex flex-col flex-1">
+                      <div
+                        className="flex flex-col flex-1"
+                        onClick={() => {
+                          // Populate the text input with `@${commentUser?.username} and make it active`
+                          setCommentText(`@${commentUser?.username} `);
+                          commentInputRef.current?.focus();
+                        }}
+                      >
                         <div className="flex gap-2 items-center justify-between">
-                          <div
-                            className="flex gap-2 items-center"
-                            onClick={() => {
-                              // Populate the text input with `@${commentUser?.username} and make it active`
-                              setCommentText(`@${commentUser?.username} `);
-                              commentInputRef.current?.focus();
-                            }}
-                          >
+                          <div className="flex gap-2 items-center">
                             <span className="text-sm font-medium cursor-pointer">
                               {commentUser?.username}
                             </span>
