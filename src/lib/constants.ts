@@ -10,7 +10,7 @@ export const ANCHOR_TIMEZONES = [
 
 export const ANCHOR_TIMEZONES_LABELS = {
   "America/New_York": "Americas",
-  "Europe/Paris": "Europe",
+  "Europe/Paris": "Europe/Africa",
   "Asia/Tehran": "West Asia",
   "Asia/Hovd": "East Asia",
 };
