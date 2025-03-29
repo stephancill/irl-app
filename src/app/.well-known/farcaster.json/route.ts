@@ -32,12 +32,12 @@ const accountAssociations = {
     signature:
       "MHhmNzJkZTJiNjBlNDVkNTlmM2EzZDk1ZjQ4MjI5Yjg1MTdkZTFmNTk3OTkzMmVkMGJkOTU2YzAxZTIzYzkwZmEwNzJkY2E4MDk3NDhkYjM2NzRiNzhmMDk2MTAxMjkyZDBhYmE4ZDdjYTMzZTBmODQzZTljZDQyNWMwNTA1NjRiOTFj",
   },
-  "https://9b8f-102-135-241-214.ngrok-free.app": {
+  "https://caff-102-135-241-214.ngrok-free.app": {
     header:
       "eyJmaWQiOjE2ODksInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgyNzM4QjIxY0I5NTIwMzM4RjlBMzc1YzNiOTcxQjE3NzhhZTEwMDRhIn0",
-    payload: "eyJkb21haW4iOiI5YjhmLTEwMi0xMzUtMjQxLTIxNC5uZ3Jvay1mcmVlLmFwcCJ9",
+    payload: "eyJkb21haW4iOiJjYWZmLTEwMi0xMzUtMjQxLTIxNC5uZ3Jvay1mcmVlLmFwcCJ9",
     signature:
-      "MHg0N2FjMWM1ZTg2YTM0MTY2NjMwMjA2NWY0ZDMwNGRhNGUyNmZlMThjYmJkOTRjOGY1OWNlNDk0ZWYzNTljNTlhNGI4MWY4YWNjZmNlYjBhNWQxMmVmYjQyZTI1YTVhZTc3Y2NmNmMyYzgxZmVjMmE3Njg2NDQ3NGExM2NiOTNiMjFi",
+      "MHg4ZGE0MmE3OTgwZDM5NzI4ODc0MmM2OGI1YzQ1MTM0ZGYyYzMwZDQ5YmE3ZjYyZGJlMjA5YjVhOGJiMWRmYTRiNTk5MzU4NzNlOTFmMjc1ZGEzNDI2ODMyYWE0NjMzMWE0Y2FlNjQ1MTkwMGY1MDU2OWU1ZDUxNDNjZGY2ZWMwOTFi",
   },
   "http://localhost:3000": {
     header:

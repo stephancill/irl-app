@@ -144,6 +144,10 @@ export function PostView({
     setPrimaryImage(post.primaryImage);
   }, [post, user]);
 
+  useEffect(() => {
+    refetchPost();
+  }, [refetchPost]);
+
   return (
     <div className="flex flex-col gap-3">
       {headerShown && (
