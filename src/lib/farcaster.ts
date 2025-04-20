@@ -1,6 +1,11 @@
 import { Message, UserDataAddMessage, UserDataType } from "@farcaster/core";
 import { Configuration, NeynarAPIClient } from "@neynar/nodejs-sdk";
 import { type User as NeynarUser } from "@neynar/nodejs-sdk/build/api";
+import {
+  QueryParameter,
+  DuneClient,
+  RunQueryArgs,
+} from "@duneanalytics/client-sdk";
 import { getFidByUsernameKey, getUserDataKey } from "./keys";
 import { redisCache } from "./redis";
 
@@ -160,40 +165,41 @@ export async function getUserDatasCached(
   return [...cachedUsers, ...res.users];
 }
 
-// export async function getMutuals(fid: number) {
-//   const client = new DuneClient(process.env.DUNE_API_KEY);
-//   const opts: RunQueryArgs = {
-//     queryId: 4546070,
-//     query_parameters: [QueryParameter.number("fid", fid)],
-//   };
-
-//   const rows = await client
-//     .runQuery(opts)
-//     .then(
-//       (executionResult) =>
-//         executionResult.result?.rows as { fid: number }[] | undefined
-//     );
-
-//   if (!rows) {
-//     throw new Error("Failed to fetch mutuals");
-//   }
-
-//   return rows;
-// }
 export async function getMutuals(fid: number) {
-  const neynarClient = new NeynarAPIClient(
-    new Configuration({
-      apiKey: process.env.NEYNAR_API_KEY!,
-    })
-  );
-  const res = await neynarClient.fetchRelevantFollowers({
-    targetFid: fid,
-    viewerFid: fid,
-  });
+  const client = new DuneClient(process.env.DUNE_API_KEY);
+  const opts: RunQueryArgs = {
+    queryId: 4546070,
+    query_parameters: [QueryParameter.number("fid", fid)],
+  };
 
-  const users = res.all_relevant_followers_dehydrated
-    .map((f) => f.user)
-    .filter((f) => f !== undefined);
+  const rows = await client
+    .runQuery(opts)
+    .then(
+      (executionResult) =>
+        executionResult.result?.rows as { fid: number }[] | undefined
+    );
 
-  return users;
+  if (!rows) {
+    throw new Error("Failed to fetch mutuals");
+  }
+
+  return rows;
 }
+// export async function getMutuals(fid: number) {
+//   const neynarClient = new NeynarAPIClient(
+//     new Configuration({
+//       apiKey: process.env.NEYNAR_API_KEY!,
+//     })
+//   );
+
+//   const res = await neynarClient.fetchRelevantFollowers({
+//     targetFid: fid,
+//     viewerFid: fid,
+//   });
+
+//   const users = res.all_relevant_followers_dehydrated
+//     .map((f) => f.user)
+//     .filter((f) => f !== undefined);
+
+//   return users;
+// }

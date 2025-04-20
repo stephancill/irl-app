@@ -35,9 +35,9 @@ const accountAssociations = {
   "https://caff-102-135-241-214.ngrok-free.app": {
     header:
       "eyJmaWQiOjE2ODksInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHgyNzM4QjIxY0I5NTIwMzM4RjlBMzc1YzNiOTcxQjE3NzhhZTEwMDRhIn0",
-    payload: "eyJkb21haW4iOiJjYWZmLTEwMi0xMzUtMjQxLTIxNC5uZ3Jvay1mcmVlLmFwcCJ9",
+    payload: "eyJkb21haW4iOiI3YWU2LTEwMi0xMzUtMjQxLTIxNC5uZ3Jvay1mcmVlLmFwcCJ9",
     signature:
-      "MHg4ZGE0MmE3OTgwZDM5NzI4ODc0MmM2OGI1YzQ1MTM0ZGYyYzMwZDQ5YmE3ZjYyZGJlMjA5YjVhOGJiMWRmYTRiNTk5MzU4NzNlOTFmMjc1ZGEzNDI2ODMyYWE0NjMzMWE0Y2FlNjQ1MTkwMGY1MDU2OWU1ZDUxNDNjZGY2ZWMwOTFi",
+      "MHg1MDUxNzRkYjBlZjNhY2UyY2QyYTRhZTRlMmQwZTJiZDgzNjQ3OGRhMjhlNzZmODM1MGQ5OGNlMWRjMjUwM2U4MzQxZDM2MjBkNDQ0MzhjMjcwMTk4Y2Y5ZWYzMmY4NDkzYTUzNzIxY2ZjYWU4MjhmZjhmZDY3ZDczN2E2Y2M0YTFj",
   },
   "http://localhost:3000": {
     header:
