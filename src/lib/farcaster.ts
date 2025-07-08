@@ -6,8 +6,8 @@ import {
   DuneClient,
   RunQueryArgs,
 } from "@duneanalytics/client-sdk";
-import { getFidByUsernameKey, getUserDataKey } from "./keys";
-import { redisCache } from "./redis";
+import { getFidByUsernameKey, getMutualsKey, getUserDataKey } from "./keys";
+import { redisCache, withCache } from "./redis";
 
 export async function getUserData(fid: number) {
   const res = await fetch(`${process.env.HUB_URL}/v1/userDataByFid?fid=${fid}`);
@@ -185,6 +185,13 @@ export async function getMutuals(fid: number) {
 
   return rows;
 }
+
+export async function getMutualsCached(fid: number) {
+  return withCache(getMutualsKey(fid), () => getMutuals(fid), {
+    ttl: 60 * 60 * 24 * 7, // 1 week
+  });
+}
+
 // export async function getMutuals(fid: number) {
 //   const neynarClient = new NeynarAPIClient(
 //     new Configuration({

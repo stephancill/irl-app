@@ -1,10 +1,8 @@
 import { withAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getMutuals, getUserDatasCached } from "@/lib/farcaster";
-import { getMutualsKey } from "@/lib/keys";
+import { getMutualsCached, getUserDatasCached } from "@/lib/farcaster";
 import { processPostsVisibility } from "@/lib/posts";
 import { postsForRendering } from "@/lib/queries";
-import { withCache } from "@/lib/redis";
 
 export const GET = withAuth<{ params: Promise<{ postId: string }> }>(
   async (req, user, context) => {
@@ -23,9 +21,7 @@ export const GET = withAuth<{ params: Promise<{ postId: string }> }>(
     }
 
     if (post.userId !== user.id) {
-      const mutuals = await withCache(getMutualsKey(user.fid), () =>
-        getMutuals(user.fid)
-      );
+      const mutuals = await getMutualsCached(user.fid);
 
       const isMutual = mutuals.some((m) => m.fid === post.fid);
       if (!isMutual) {

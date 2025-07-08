@@ -1,19 +1,15 @@
 import { withAuth } from "@/lib/auth";
 import { db } from "@/lib/db";
-import { getMutuals, getUserDatasCached } from "@/lib/farcaster";
-import { getMutualsKey } from "@/lib/keys";
+import { getMutualsCached, getUserDatasCached } from "@/lib/farcaster";
 import { processPostsVisibility } from "@/lib/posts";
 import { latestPostAlert, postsForRendering } from "@/lib/queries";
-import { withCache } from "@/lib/redis";
 
 export const GET = withAuth(async (req, user) => {
   const { searchParams } = new URL(req.url);
   const cursor = searchParams.get("cursor");
   const limit = 5;
 
-  const mutuals = await withCache(getMutualsKey(user.fid), () =>
-    getMutuals(user.fid)
-  );
+  const mutuals = await getMutualsCached(user.fid);
 
   // Filter out mutuals that are not in db
   // TODO: When users >> we need to find a better way to do this

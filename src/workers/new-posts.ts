@@ -1,11 +1,10 @@
 import { Worker } from "bullmq";
 import { NEW_POST_NOTIFICATIONS_QUEUE_NAME } from "../lib/constants";
-import { NewPostNotificationsJobData } from "../types/jobs";
 import { db } from "../lib/db";
-import { redisQueue, withCache } from "../lib/redis";
-import { getMutualsKey } from "../lib/keys";
-import { getMutuals, getUserDatasCached } from "../lib/farcaster";
+import { getMutualsCached, getUserDatasCached } from "../lib/farcaster";
 import { notifyUsers } from "../lib/notifications";
+import { redisQueue } from "../lib/redis";
+import { NewPostNotificationsJobData } from "../types/jobs";
 
 export const newPostNotificationsWorker =
   new Worker<NewPostNotificationsJobData>(
@@ -26,9 +25,7 @@ export const newPostNotificationsWorker =
 
       const [userData] = await getUserDatasCached([user.fid]);
 
-      const mutuals = await withCache(getMutualsKey(user.fid), () =>
-        getMutuals(user.fid)
-      );
+      const mutuals = await getMutualsCached(user.fid);
       const mutualsFidsSet = new Set(mutuals.map((m) => m.fid));
 
       // Filter out mutuals that are not in db

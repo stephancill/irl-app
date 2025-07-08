@@ -108,6 +108,10 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   );
 
   const fetchUser = useCallback(async () => {
+    if (!session?.id) {
+      throw new Error("No session id");
+    }
+
     const response = await authFetch("/api/user");
 
     if (!response.ok) {
@@ -115,7 +119,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
 
     return response.json();
-  }, [authFetch]);
+  }, [authFetch, session?.id]);
 
   const {
     data: user,
@@ -125,7 +129,7 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   } = useQuery({
     queryKey: ["user", session?.id],
     queryFn: fetchUser,
-    enabled: isSDKLoaded && !!context?.user?.fid && !!session,
+    enabled: isSDKLoaded && !!context?.user?.fid && !!session?.id,
     refetchInterval: 1000 * 60,
     retry: false,
   });
