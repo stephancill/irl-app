@@ -183,9 +183,13 @@ export async function getMutuals(fid: number): Promise<{ fid: number }[]> {
 
   const data = await response.json();
   
-  // The API returns an array of objects with fid, username, and pfp_url
+  // The API returns an object with mutual_followers array containing objects with fid, username, and pfp_url
   // We only need the fid property to match the expected return type
-  return data.map((user: { fid: number; username: string; pfp_url: string }) => ({
+  if (!data.mutual_followers || !Array.isArray(data.mutual_followers)) {
+    throw new Error("Invalid response format: missing mutual_followers array");
+  }
+  
+  return data.mutual_followers.map((user: { fid: number; username: string; pfp_url: string }) => ({
     fid: user.fid,
   }));
 }
