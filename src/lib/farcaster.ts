@@ -1,11 +1,6 @@
 import { Message, UserDataAddMessage, UserDataType } from "@farcaster/core";
 import { Configuration, NeynarAPIClient } from "@neynar/nodejs-sdk";
 import { type User as NeynarUser } from "@neynar/nodejs-sdk/build/api";
-import {
-  QueryParameter,
-  DuneClient,
-  RunQueryArgs,
-} from "@duneanalytics/client-sdk";
 import { getFidByUsernameKey, getMutualsKey, getUserDataKey } from "./keys";
 import { redisCache, withCache } from "./redis";
 
@@ -165,25 +160,38 @@ export async function getUserDatasCached(
   return [...cachedUsers, ...res.users];
 }
 
-export async function getMutuals(fid: number) {
-  const client = new DuneClient(process.env.DUNE_API_KEY);
-  const opts: RunQueryArgs = {
-    queryId: 4546070,
-    query_parameters: [QueryParameter.number("fid", fid)],
-  };
-
-  const rows = await client
-    .runQuery(opts)
-    .then(
-      (executionResult) =>
-        executionResult.result?.rows as { fid: number }[] | undefined
-    );
-
-  if (!rows) {
-    throw new Error("Failed to fetch mutuals");
+export async function getMutuals(fid: number): Promise<{ fid: number }[]> {
+  const apiKey = process.env.QUOTIENT_API_KEY;
+  if (!apiKey) {
+    throw new Error("QUOTIENT_API_KEY environment variable is required");
   }
 
-  return rows;
+  const response = await fetch("https://api.quotient.social/v1/farcaster-users/mutuals", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      fid: fid,
+      api_key: apiKey,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch mutuals: ${response.statusText} (${response.status})`);
+  }
+
+  const data = await response.json();
+  
+  // The API returns an object with mutual_followers array containing objects with fid, username, and pfp_url
+  // We only need the fid property to match the expected return type
+  if (!data.mutual_followers || !Array.isArray(data.mutual_followers)) {
+    throw new Error("Invalid response format: missing mutual_followers array");
+  }
+  
+  return data.mutual_followers.map((user: { fid: number; username: string; pfp_url: string }) => ({
+    fid: user.fid,
+  }));
 }
 
 export async function getMutualsCached(fid: number) {
