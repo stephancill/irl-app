@@ -20,7 +20,7 @@
     "@bull-board/express": "^6.5.4",
     "@duneanalytics/client-sdk": "^0.2.4",
     "@farcaster/auth-client": "^0.6.0",
-    "@farcaster/core": "^0.15.6",
+    "@farcaster/core": "^0.18.4",
     "@farcaster/frame-node": "^0.0.10",
     "@farcaster/frame-sdk": "^0.0.53",
     "@lucia-auth/adapter-postgresql": "^3.1.2",

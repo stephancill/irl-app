@@ -21,8 +21,8 @@ importers:
         specifier: ^0.6.0
         version: 0.6.0(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.24.1)
       '@farcaster/core':
-        specifier: ^0.15.6
-        version: 0.15.6(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.24.1)
+        specifier: ^0.18.4
+        version: 0.18.4(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.24.1)
       '@farcaster/frame-node':
         specifier: ^0.0.10
         version: 0.0.10(typescript@5.7.2)(zod@3.24.1)
@@ -555,8 +555,8 @@ packages:
   '@farcaster/auth-client@0.6.0':
     resolution: {integrity: sha512-YXTol6FHglYLXgpQg49ZG0262NzseFV2xf1gzrgvHh4iQqBY9pwSS2+hmW+N16H/tm/UgNg6JUTNAakFsjrJ2Q==}
 
-  '@farcaster/core@0.15.6':
-    resolution: {integrity: sha512-Vxq2JhqdZYEMjH4PIwPXQkalY46S4Mol2oCSHUafXenDx6WSoQJqF/4an4KyxGQbmA7Cf8+hl6zuNzkkHXEUyQ==}
+  '@farcaster/core@0.18.4':
+    resolution: {integrity: sha512-3DX0ZYX6tRzufXlAIbL7SezEeLUvZbzsLpx+/8vnGvJZw/f+dT8Rx5UG26Gzayi60DCb/uTOGk7B7VdSc/b0Vw==}
 
   '@farcaster/frame-core@0.0.21':
     resolution: {integrity: sha512-VugoKVo7R/CV3hIHDd+4XDvV1rhSQ8CzXdr/DGzUmp9AeUDvKi+igUE/Ofb85BfK19qHWz0Rx239VdPEE7ZxMg==}
@@ -5071,14 +5071,14 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@farcaster/core@0.15.6(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.24.1)':
+  '@farcaster/core@0.18.4(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.24.1)':
     dependencies:
       '@faker-js/faker': 7.6.0
-      '@noble/curves': 1.7.0
-      '@noble/hashes': 1.6.1
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
       bs58: 5.0.0
       neverthrow: 6.2.2
-      viem: 2.21.57(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.24.1)
+      viem: 2.30.5(bufferutil@4.0.9)(typescript@5.7.2)(utf-8-validate@5.0.10)(zod@3.24.1)
     transitivePeerDependencies:
       - bufferutil
       - typescript
